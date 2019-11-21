@@ -4,6 +4,9 @@ const initialState ={
         hp: 100,
         gold: 100,
         exp: 0,
+        expToNextLevel: 100,
+        level: 1,
+        hpRegain: 0.5,
         stats: {
             strength: 10,
             agility: 5
@@ -16,7 +19,7 @@ const initialState ={
             rewards: {
                 gold: 5,
                 item: "glove",
-                exp: 5
+                exp: 100
             },
             enemy: {
                 name: "orc",
@@ -30,12 +33,12 @@ const initialState ={
             rewards: {
                 gold: 5,
                 item: "glove",
-                exp: 5
+                exp: 5000
             },
             enemy: {
                 name: "orc",
                 hp: 50,
-                damage: 30
+                damage: 20
             }
         }
     ]
@@ -63,12 +66,20 @@ function doAction(action, actionParams) {
         case "reset-adventure":
             globalState = resetAdventure(globalState, initialState, actionParams.adventureIndex);
             break;
+        case "reward-exp":
+            globalState = rewardExp(globalState, actionParams.exp);
+            break;
+        case "level-up":
+            globalState = levelUp(globalState);
+            break;   
     }
 
     console.log(Array.from(arguments));
     console.log(globalState);
 
     renderGame(globalState);
+
+    return globalState;
 }
 
 function renderGame() {
@@ -85,11 +96,15 @@ function getPlayerElement() {
     <ul>
         <li>
             <span class="stat-name">HP</span>:
-            <span id="player-hp">${globalState.player.hp}</span>
+            <span id="player-hp">${Math.ceil(globalState.player.hp)}</span>
         </li>
         <li>
             <span class="stat-name">exp</span>: 
             <span id="player-exp">${globalState.player.exp}</span>
+        </li>
+        <li>
+            <span class="stat-name">level</span>: 
+            <span id="player-level">${globalState.player.level}</span>
         </li>
         <li>
             <span class="stat-name">gold</span>: 
@@ -138,21 +153,23 @@ function getAdventuresElement(){
 
     if (isDead(globalState.adventures[adventureIndex].enemy)){
         doAction("give-this-man-a-cookie", {gold: globalState.adventures[adventureIndex].rewards.gold});
+        doAction("reward-exp", {exp: globalState.adventures[adventureIndex].rewards.exp});
         doAction("reset-adventure", {adventureIndex: adventureIndex});
-        return alert("enemy dead");
+        return console.log("enemy dead");
     } 
     
     doAction("change-player-hp", {hpDelta: -globalState.adventures[adventureIndex].enemy.damage});
     if (isDead(globalState.player)){
         doAction("reset-adventure", {adventureIndex: adventureIndex});
-        return alert("you dead");
+        return console.log("you dead");
     } 
 
     doAction("collect-from-adventure", {adventureIndex: adventureIndex});
     if (isCollected(globalState.adventures[adventureIndex])){
         doAction("give-this-man-a-cookie", {gold: globalState.adventures[adventureIndex].rewards.gold});
+        doAction("reward-exp", {exp: globalState.adventures[adventureIndex].rewards.exp});
         doAction("reset-adventure", {adventureIndex: adventureIndex});
-        return alert("you got away");
+        return console.log("you got away");
     } 
 
     return setTimeout(() => performRound(adventureIndex), 2000);
@@ -175,6 +192,30 @@ function giveThisManACookie(state, gold) {
         player: {
             ...state.player,
             gold: state.player.gold + gold
+        }
+    }
+}
+
+function levelUp(state) {
+    return {
+        ...state,
+        player: {
+            ...state.player,
+            level: state.player.level + 1,
+            expToNextLevel: state.player.expToNextLevel + (state.player.level*300) 
+        }
+    }
+}
+
+function rewardExp(state, exp) {
+    while(state.player.expToNextLevel <= exp + state.player.exp){
+        state = doAction("level-up", state);  
+    }
+    return {
+        ...state,
+        player: {
+            ...state.player,
+            exp: state.player.exp + exp,
         }
     }
 }
@@ -229,8 +270,10 @@ function isDead(character) {
     return character.hp <= 0;
 }
 
-setInterval((globalState) => {
-    doAction("change-player-hp", {hpDelta: 1});    
-}, 3000);
+function healPlayer() {
+    doAction("change-player-hp", {hpDelta: globalState.player.hpRegain});    
+}
+
+setInterval(healPlayer, 1000);
 
 doAction("start-game", {state: initialState});

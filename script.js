@@ -1,49 +1,3 @@
-const initialState ={
-    player: {
-        maxHP: 100,
-        hp: 100,
-        gold: 100,
-        exp: 0,
-        expToNextLevel: 100,
-        level: 1,
-        hpRegain: 0.5,
-        stats: {
-            strength: 10,
-            agility: 5
-        }
-    },
-    adventures: [
-        {
-            description: "fetch",
-            collectibles: 3,
-            rewards: {
-                gold: 5,
-                item: "glove",
-                exp: 100
-            },
-            enemy: {
-                name: "orc",
-                hp: 30,
-                damage: 10
-            }
-        },
-        {
-            description: "more fetch",
-            collectibles: 3,
-            rewards: {
-                gold: 5,
-                item: "glove",
-                exp: 5000
-            },
-            enemy: {
-                name: "orc",
-                hp: 50,
-                damage: 20
-            }
-        }
-    ]
-};
-
 let globalState = {};
 
 function doAction(action, actionParams) {
@@ -140,15 +94,16 @@ function getAdventureElement(adventure, whatToDoWhenClicked){
 }
 
 function getAdventuresElement(){
-    const buttons = globalState.adventures.map((adventure, index) => {
-        return getAdventureElement(adventure, () => performRound(index));
+    const buttons = getAdventures(globalState).map(adventure => {
+        return getAdventureElement(adventure, () => performRound(adventure));
     });
     const buttonsContainer = document.createElement("div");
     buttons.forEach(button => buttonsContainer.appendChild(button));
     return buttonsContainer;
 };
 
- function performRound(adventureIndex){
+ function performRound(adventure){
+    const adventureIndex = globalState.adventures.indexOf(adventure);
     doAction("change-enemy-hp", {adventureIndex: adventureIndex, hpDelta: -globalState.player.stats.strength});
 
     if (isDead(globalState.adventures[adventureIndex].enemy)){
@@ -172,8 +127,12 @@ function getAdventuresElement(){
         return console.log("you got away");
     } 
 
-    return setTimeout(() => performRound(adventureIndex), 2000);
+    return setTimeout(() => performRound(globalState.adventures[adventureIndex]), 2000);
  }
+
+function getAdventures(state){
+    return state.adventures.filter(adventure => state.player.level >= adventure.requiredLevel)
+}
 
 function changePlayerHP(state, hpDelta) {
     const newHP = Math.min(state.player.maxHP, Math.max(0, state.player.hp + hpDelta));

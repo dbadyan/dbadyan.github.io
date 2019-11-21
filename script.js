@@ -1,78 +1,107 @@
-const player = {
-    hp: 100,
-    gold: 100,
-    exp: 0,
-    stats: {
-        strength: 10,
-        agility: 5
-    }
-};
-
-const initialAdventures = [
-    {
-        description: "fetch",
-        collectibles: 3,
-        rewards: {
-            gold: 5,
-            item: "glove",
-            exp: 5
-        },
-        enemy: {
-            name: "orc",
-            hp: 30,
-            damage: 10
+const initialState ={
+    player: {
+        maxHP: 100,
+        hp: 100,
+        gold: 100,
+        exp: 0,
+        stats: {
+            strength: 10,
+            agility: 5
         }
     },
-    {
-        description: "more fetch",
-        collectibles: 3,
-        rewards: {
-            gold: 5,
-            item: "glove",
-            exp: 5
+    adventures: [
+        {
+            description: "fetch",
+            collectibles: 3,
+            rewards: {
+                gold: 5,
+                item: "glove",
+                exp: 5
+            },
+            enemy: {
+                name: "orc",
+                hp: 30,
+                damage: 10
+            }
         },
-        enemy: {
-            name: "orc",
-            hp: 50,
-            damage: 10
+        {
+            description: "more fetch",
+            collectibles: 3,
+            rewards: {
+                gold: 5,
+                item: "glove",
+                exp: 5
+            },
+            enemy: {
+                name: "orc",
+                hp: 50,
+                damage: 30
+            }
         }
+    ]
+};
+
+let globalState = {};
+
+function doAction(action, actionParams) {
+    switch(action) {
+        case "start-game":
+            globalState = JSON.parse(JSON.stringify(actionParams.state));
+            break;
+        case "change-enemy-hp":
+            globalState = changeEnemyHP(globalState, actionParams.adventureIndex, actionParams.hpDelta);
+            break;
+        case "change-player-hp":
+            globalState = changePlayerHP(globalState, actionParams.hpDelta);
+            break;
+        case "give-this-man-a-cookie":
+            globalState = giveThisManACookie(globalState, actionParams.gold);
+            break;
+        case "collect-from-adventure":
+            globalState = collectFromAdventure(globalState, actionParams.adventureIndex)
+            break;
+        case "reset-adventure":
+            globalState = resetAdventure(globalState, initialState, actionParams.adventureIndex);
+            break;
     }
-]
 
-function renderGame(player, adventures) {
-    console.log(player);
-    console.log(adventures);
+    console.log(Array.from(arguments));
+    console.log(globalState);
 
-    document.getElementById("player-data").innerHTML = "";
-    document.getElementById("player-data").appendChild(getPlayerElement(player, adventures));
-
-    document.getElementById("advantures-data").innerHTML = "";
-    document.getElementById("advantures-data").appendChild(getAdventuresElement(player, adventures));
+    renderGame(globalState);
 }
 
-function getPlayerElement(player, adventures) {
+function renderGame() {
+    document.getElementById("player-data").innerHTML = "";
+    document.getElementById("player-data").appendChild(getPlayerElement());
+
+    document.getElementById("advantures-data").innerHTML = "";
+    document.getElementById("advantures-data").appendChild(getAdventuresElement());
+}
+
+function getPlayerElement() {
     const playerContainer = document.createElement("div");
     playerContainer.innerHTML = `
     <ul>
         <li>
             <span class="stat-name">HP</span>:
-            <span id="player-hp">${player.hp}</span>
+            <span id="player-hp">${globalState.player.hp}</span>
         </li>
         <li>
             <span class="stat-name">exp</span>: 
-            <span id="player-exp">${player.exp}</span>
+            <span id="player-exp">${globalState.player.exp}</span>
         </li>
         <li>
             <span class="stat-name">gold</span>: 
-            <span id="player-gold">${player.gold}</span>
+            <span id="player-gold">${globalState.player.gold}</span>
         </li>
         <li>
             <span class="stat-name">strength</span>: 
-            <span id="player-strength">${player.stats.strength}</span>
+            <span id="player-strength">${globalState.player.stats.strength}</span>
         </li>
         <li>
             <span class="stat-name">agility</span>: 
-            <span id="player-agility">${player.stats.agility}</span>
+            <span id="player-agility">${globalState.player.stats.agility}</span>
         </li>
     </ul>`;
     return playerContainer;
@@ -95,78 +124,113 @@ function getAdventureElement(adventure, whatToDoWhenClicked){
     return adventureContainer;
 }
 
-function getAdventuresElement(player, adventures){
-    const buttons = adventures.map((adventure, index) => {
-        return getAdventureElement(adventure, () => performRound(player, adventures, index));
+function getAdventuresElement(){
+    const buttons = globalState.adventures.map((adventure, index) => {
+        return getAdventureElement(adventure, () => performRound(index));
     });
     const buttonsContainer = document.createElement("div");
     buttons.forEach(button => buttonsContainer.appendChild(button));
     return buttonsContainer;
-    
 };
 
- function performRound(player, adventures, adventureIndex){
-    const adventure = adventures[adventureIndex];
+ function performRound(adventureIndex){
+    doAction("change-enemy-hp", {adventureIndex: adventureIndex, hpDelta: -globalState.player.stats.strength});
 
-    const adventuresAfterDamage = hitAdvantureEnemy(adventures, adventureIndex, -player.stats.strength);
-    if (isDead(adventuresAfterDamage[adventureIndex].enemy)){
-        adventure.rewards.gold
-        const richCharacter = giveThisManACookie(player, adventuresAfterDamage[adventureIndex].rewards.gold);
-        renderGame(richCharacter, initialAdventures);
+    if (isDead(globalState.adventures[adventureIndex].enemy)){
+        doAction("give-this-man-a-cookie", {gold: globalState.adventures[adventureIndex].rewards.gold});
+        doAction("reset-adventure", {adventureIndex: adventureIndex});
         return alert("enemy dead");
     } 
     
-    const playerAfterDamage = changeHP(player, -adventure.enemy.damage);
-    if (isDead(playerAfterDamage)){
-        renderGame(playerAfterDamage, initialAdventures);
+    doAction("change-player-hp", {hpDelta: -globalState.adventures[adventureIndex].enemy.damage});
+    if (isDead(globalState.player)){
+        doAction("reset-adventure", {adventureIndex: adventureIndex});
         return alert("you dead");
     } 
 
-    const adventuresAfterCollection = collectFromAdventure(adventuresAfterDamage, adventureIndex);
-    if (isCollected(adventuresAfterCollection[adventureIndex])){
-        const richCharacter = giveThisManACookie(player, adventuresAfterCollection[adventureIndex].rewards.gold);
-        renderGame(richCharacter, initialAdventures);
+    doAction("collect-from-adventure", {adventureIndex: adventureIndex});
+    if (isCollected(globalState.adventures[adventureIndex])){
+        doAction("give-this-man-a-cookie", {gold: globalState.adventures[adventureIndex].rewards.gold});
+        doAction("reset-adventure", {adventureIndex: adventureIndex});
         return alert("you got away");
     } 
-    
-    renderGame(playerAfterDamage, adventuresAfterCollection);
 
-    return setTimeout(() => performRound(playerAfterDamage, adventuresAfterCollection, adventureIndex), 2000);
+    return setTimeout(() => performRound(adventureIndex), 2000);
  }
 
-function changeHP(character, hpDelta) {
+function changePlayerHP(state, hpDelta) {
+    const newHP = Math.min(state.player.maxHP, Math.max(0, state.player.hp + hpDelta));
     return {
-        ...character,
-        hp: character.hp + hpDelta
+        ...state,
+        player: {
+            ...state.player,
+            hp: newHP
+        }
     }
 }
-function giveThisManACookie(character, gold) {
+
+function giveThisManACookie(state, gold) {
     return {
-        ...character,
-        gold: character.gold + gold
+        ...state,
+        player: {
+            ...state.player,
+            gold: state.player.gold + gold
+        }
     }
 }
-function hitAdvantureEnemy(adventures, adventureIndex, hpDelta) {
-    const newAdventures = [...adventures]
+
+function changeEnemyHP(state, adventureIndex, hpDelta) {
+    const newAdventures = [...state.adventures];
     newAdventures[adventureIndex] = {
-        ...newAdventures[adventureIndex],
-        enemy: changeHP(newAdventures[adventureIndex].enemy, hpDelta)
-    };
-    return newAdventures;
+        ...state.adventures[adventureIndex],
+        enemy: {
+            ...state.adventures[adventureIndex].enemy,
+            hp: state.adventures[adventureIndex].enemy.hp + hpDelta
+        }
+    }
+
+    return {
+        ...state,
+        adventures: newAdventures
+    }
 }
-function collectFromAdventure(adventures, adventureIndex){
-    const newAdventures = [...adventures]
+
+function collectFromAdventure(state, adventureIndex){
+    const newAdventures = [...state.adventures];
+    
     newAdventures[adventureIndex] = {
-        ...adventures[adventureIndex],
-        collectibles: adventures[adventureIndex].collectibles - 1
+        ...state.adventures[adventureIndex],
+        collectibles: state.adventures[adventureIndex].collectibles - 1
     };
-    return newAdventures;
+
+    return {
+        ...state,
+        adventures: newAdventures
+    }
 }
+
+function resetAdventure(currentState, initialState, adventureIndex) {
+    const newAdventures = [...currentState.adventures];
+    newAdventures[adventureIndex] = {
+        ...initialState.adventures[adventureIndex]
+    }
+
+    return {
+        ...currentState,
+        adventures: newAdventures
+    }
+}
+
 function isCollected(adventure){
     return adventure.collectibles <= 0;
 }
+
 function isDead(character) {
     return character.hp <= 0;
 }
 
-renderGame(player, initialAdventures);
+setInterval((globalState) => {
+    doAction("change-player-hp", {hpDelta: 1});    
+}, 3000);
+
+doAction("start-game", {state: initialState});

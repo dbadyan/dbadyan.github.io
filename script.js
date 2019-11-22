@@ -54,7 +54,7 @@ function getPlayerElement() {
         </li>
         <li>
             <span class="stat-name">exp</span>: 
-            <span id="player-exp">${globalState.player.exp}</span>
+            <span id="player-exp">${globalState.player.exp}/${globalState.player.expToNextLevel}</span>
         </li>
         <li>
             <span class="stat-name">level</span>: 
@@ -86,7 +86,7 @@ function getAdventureElement(adventure, whatToDoWhenClicked){
     adventureContainer.className = "adventure-container";
     adventureContainer.innerHTML = `
         Monster: ${adventure.enemy.name} (${adventure.enemy.hp} hp)<br />
-        Reward: ${adventure.rewards.gold} gold <br />
+        Reward: ${adventure.rewards.gold} gold | ${adventure.rewards.exp} exp <br />
     `;
     adventureContainer.appendChild(button);
 

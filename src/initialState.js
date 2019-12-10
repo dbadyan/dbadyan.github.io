@@ -1,4 +1,4 @@
-const initialState ={
+export const initialState = {
     player: {
         maxHP: 100,
         hp: 100,
@@ -13,15 +13,26 @@ const initialState ={
             agility: 5
         }
     },
-    party: [
-        {
-            name: "pooper",
-            stats:{
-                strength: 5
+    party: {
+        adventurers: [
+            {
+                currentQuest: null,
+                name: "pooper",
+                stats: {
+                    strength: 5
+                },
+                price: 200
             },
-            price: 200
-        }   
-    ],
+            {
+                currentQuest: null,
+                name: "butthole",
+                stats: {
+                    strength: 5
+                },
+                price: 200
+            }
+        ]
+    },
     adventures: [
         {
             description: "fetch",
@@ -41,7 +52,7 @@ const initialState ={
         {
             description: "more fetch",
             collectibles: 3,
-            requiredLevel: 2,   
+            requiredLevel: 2,
             rewards: {
                 gold: 5,
                 item: "glove",

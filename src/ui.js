@@ -23,31 +23,32 @@ export function renderGame(state) {
 
 function getPlayerElement(state) {
     const playerContainer = document.createElement("div");
+    const player = state.party.adventurers[0];
     playerContainer.innerHTML = `
     <ul>
         <li>
             <span class="stat-name">HP</span>:
-            <span id="player-hp">${Math.ceil(state.player.hp)}</span>
+            <span id="player-hp">${Math.ceil(player.hp)}</span>
         </li>
         <li>
             <span class="stat-name">exp</span>: 
-            <span id="player-exp">${state.player.exp}/${state.player.expToNextLevel}</span>
+            <span id="player-exp">${player.exp}/${player.expToNextLevel}</span>
         </li>
         <li>
             <span class="stat-name">level</span>: 
-            <span id="player-level">${state.player.level}</span>
+            <span id="player-level">${player.level}</span>
         </li>
         <li>
             <span class="stat-name">gold</span>: 
-            <span id="player-gold">${state.player.gold}</span>
+            <span id="player-gold">${player.gold}</span>
         </li>
         <li>
             <span class="stat-name">strength</span>: 
-            <span id="player-strength">${state.player.stats.strength}</span>
+            <span id="player-strength">${player.stats.strength}</span>
         </li>
         <li>
             <span class="stat-name">agility</span>: 
-            <span id="player-agility">${state.player.stats.agility}</span>
+            <span id="player-agility">${player.stats.agility}</span>
         </li>
     </ul>`;
     return playerContainer;
@@ -123,5 +124,5 @@ function getAdventurers(state) {
 }
 
 function getAvailableAdventures(state) {
-    return state.adventures.filter(adventure => state.player.level >= adventure.requiredLevel)
+    return state.adventures.filter(adventure => state.party.adventurers[0].level >= adventure.requiredLevel)
 }

@@ -4,12 +4,15 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev" : "webpack --watch"
+    "dev": "webpack --watch"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "immer": "^5.1.0"
   }
 }

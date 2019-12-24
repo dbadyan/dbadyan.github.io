@@ -1,122 +1,68 @@
 import { doAction } from './reducers';
+import { produce, createDraft } from "immer";
 
 export function changePlayerHP(state, hpDelta) {
-    const newHP = Math.min(state.player.maxHP, Math.max(0, state.player.hp + hpDelta));
-    return {
-        ...state,
-        player: {
-            ...state.player,
-            hp: newHP
-        }
-    }
+    return produce(state, draftState => {
+        const player = draftState.party.adventurers[0];
+        draftState.party.adventurers[0].hp = Math.min(player.maxHP, Math.max(0, player.hp + hpDelta));
+    })
+
+
 }
 
 export function giveThisManACookie(state, gold) {
-    return {
-        ...state,
-        player: {
-            ...state.player,
-            gold: state.player.gold + gold
-        }
-    }
+    return produce(state, draftState => {
+        draftState.party.adventurers[0].gold += gold;
+    })
 }
 
 export function levelUp(state) {
-    return {
-        ...state,
-        player: {
-            ...state.player,
-            level: state.player.level + 1,
-            expToNextLevel: state.player.expToNextLevel + (state.player.level * 300)
-        }
-    }
+    return produce(state, draftState => {
+        draftState.party.adventurers[0].level += 1;
+        draftState.party.adventurers[0].expToNextLevel += (draftState.party.adventurers[0].level * 300)
+    })
 }
 
 export function rewardExp(state, exp) {
-    while (state.player.expToNextLevel <= exp + state.player.exp) {
-        state = doAction("level-up", state);
-    }
-    return {
-        ...state,
-        player: {
-            ...state.player,
-            exp: state.player.exp + exp,
+    return produce(state, draftState => {
+        while (draftState.party.adventurers[0].expToNextLevel <= exp + draftState.party.adventurers[0].exp) {
+            draftState = createDraft(doAction("level-up", draftState));
         }
-    }
+        draftState.party.adventurers[0].exp += exp;
+        return draftState;
+    })
+
 }
 
 export function changeEnemyHP(state, adventureIndex, hpDelta) {
-    const newAdventures = [...state.adventures];
-    newAdventures[adventureIndex] = {
-        ...state.adventures[adventureIndex],
-        enemy: {
-            ...state.adventures[adventureIndex].enemy,
-            hp: state.adventures[adventureIndex].enemy.hp + hpDelta
-        }
-    }
+    return produce(state, draftState => {
+        draftState.adventures[adventureIndex].enemy.hp += hpDelta;
+    })
 
-    return {
-        ...state,
-        adventures: newAdventures
-    }
 }
 
 export function sendAdventurerToAdventure(state, adventureIndex, adventurerIndex) {
-    const newAdventurers = [...state.party.adventurers];
-    newAdventurers[adventurerIndex] = {
-        ...newAdventurers[adventurerIndex],
-        currentQuest: adventureIndex
-    }
-
-    return {
-        ...state,
-        party: {
-            ...state.party,
-            adventurers: newAdventurers
-        }
-    }
+    return produce(state, draftState => {
+        draftState.party.adventurers[adventurerIndex].currentQuest = adventureIndex;
+    })
 }
 
 export function returnAdventurerFromAdventure(state, adventurerIndex) {
-    const newAdventurers = [...state.party.adventurers];
-    newAdventurers[adventurerIndex] = {
-        ...newAdventurers[adventurerIndex],
-        currentQuest: null
-    }
-
-    return {
-        ...state,
-        party: {
-            ...state.party,
-            adventurers: newAdventurers
-        }
-    }
+    return produce(state, draftState => {
+        draftState.party.adventurers[adventurerIndex].currentQuest = null;
+    })
 }
 
 export function collectFromAdventure(state, adventureIndex) {
-    const newAdventures = [...state.adventures];
-
-    newAdventures[adventureIndex] = {
-        ...state.adventures[adventureIndex],
-        collectibles: state.adventures[adventureIndex].collectibles - 1
-    };
-
-    return {
-        ...state,
-        adventures: newAdventures
-    }
+    return produce(state, draftState => {
+        draftState.adventures[adventureIndex].collectibles -= 1;
+    })
 }
 
 export function resetAdventure(currentState, initialState, adventureIndex) {
-    const newAdventures = [...currentState.adventures];
-    newAdventures[adventureIndex] = {
-        ...initialState.adventures[adventureIndex]
-    }
-
-    return {
-        ...currentState,
-        adventures: newAdventures
-    }
+    return produce(currentState, draftState => {
+        draftState.adventures[adventureIndex] = initialState.adventures[adventureIndex];
+    })
 }
 export function startQuest(state, adventureIndex) {
     state = doAction("send-adventurer-to-adventure", { adventureindex: adventureIndex, adventurerIndex: 0 });
@@ -174,21 +120,11 @@ function isDead(character) {
 }
 
 export function chooseAdventurerForAdventure(currentState, isAdventurerGoing, adventurerName, adventureIndex) {
-    const newAdventures = [...currentState.adventures];
-    let newSelectedPartyMembers;
-    if (isAdventurerGoing) {
-        newSelectedPartyMembers = [...newAdventures[adventureIndex].selectedPartyMembers];
-        newSelectedPartyMembers.push(adventurerName);
-    } else {
-        newSelectedPartyMembers = newAdventures[adventureIndex].selectedPartyMembers.filter(partyMember => partyMember !== adventurerName)
-    }
-    
-    newAdventures[adventureIndex] = {
-        ...newAdventures[adventureIndex],
-        selectedPartyMembers: newSelectedPartyMembers
-    }
-    return {
-        ...currentState,
-        adventures: newAdventures
-    }
+    return produce(currentState, draftState => {
+        if (isAdventurerGoing) {
+            draftState.adventures[adventureIndex].selectedPartyMembers.push(adventurerName);
+        } else {
+            draftState.adventures[adventureIndex].selectedPartyMembers = draftState.adventures[adventureIndex].selectedPartyMembers.filter(partyMember => partyMember !== adventurerName)
+        }
+    })
 }

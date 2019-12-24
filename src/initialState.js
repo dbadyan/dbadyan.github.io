@@ -17,6 +17,22 @@ export const initialState = {
         adventurers: [
             {
                 currentQuest: null,
+                name: "player1",
+                maxHP: 100,
+                hp: 100,
+                gold: 100,
+                exp: 0,
+                expToNextLevel: 100,
+                level: 1,
+                hpRegain: 0.5,
+                isInAdventure: false,
+                stats: {
+                    strength: 10,
+                    agility: 5
+                }
+            },
+            {
+                currentQuest: null,
                 name: "pooper",
                 stats: {
                     strength: 5
@@ -30,7 +46,7 @@ export const initialState = {
                     strength: 5
                 },
                 price: 200
-            }
+            },
         ]
     },
     adventures: [

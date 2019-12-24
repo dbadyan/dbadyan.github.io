@@ -172,3 +172,23 @@ function isCollected(adventure) {
 function isDead(character) {
     return character.hp <= 0;
 }
+
+export function chooseAdventurerForAdventure(currentState, isAdventurerGoing, adventurerName, adventureIndex) {
+    const newAdventures = [...currentState.adventures];
+    let newSelectedPartyMembers;
+    if (isAdventurerGoing) {
+        newSelectedPartyMembers = [...newAdventures[adventureIndex].selectedPartyMembers];
+        newSelectedPartyMembers.push(adventurerName);
+    } else {
+        newSelectedPartyMembers = newAdventures[adventureIndex].selectedPartyMembers.filter(partyMember => partyMember !== adventurerName)
+    }
+    
+    newAdventures[adventureIndex] = {
+        ...newAdventures[adventureIndex],
+        selectedPartyMembers: newSelectedPartyMembers
+    }
+    return {
+        ...currentState,
+        adventures: newAdventures
+    }
+}

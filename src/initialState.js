@@ -47,7 +47,8 @@ export const initialState = {
                 name: "orc",
                 hp: 30,
                 damage: 10
-            }
+            },
+            selectedPartyMembers: []
         },
         {
             description: "more fetch",
@@ -62,7 +63,8 @@ export const initialState = {
                 name: "orc",
                 hp: 50,
                 damage: 20
-            }
+            },
+            selectedPartyMembers: []
         }
     ]
 };

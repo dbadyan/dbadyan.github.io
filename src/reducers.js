@@ -44,6 +44,9 @@ export function doAction(action, actionParams) {
         case "start-quest":
             state = actions.startQuest(state,actionParams.adventureIndex);
             break;
+        case "choose-adventurer-for-adventure":
+            state = actions.chooseAdventurerForAdventure(state, actionParams.isAdventurerGoing, actionParams.adventurerName, actionParams.adventureIndex);
+            break;
     }
 
     store.setState(state);

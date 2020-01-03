@@ -1,27 +1,36 @@
 import { doAction } from './reducers';
+import { startQuest } from './quests';
 
-export function renderGame(state) {
+export function renderGame(store) {
 
-    const newPlayerElement = getPlayerElement(state);
+    const newPlayerElement = getPlayerElement(store);
     if (newPlayerElement.outerHTML != document.getElementById("player-data").innerHTML) {
         document.getElementById("player-data").innerHTML = "";
         document.getElementById("player-data").appendChild(newPlayerElement);
     }
 
-    const newAdventuresElement = getAdventuresElement(state);
+    const newAdventuresElement = getAdventuresElement(store);
     if (newAdventuresElement.outerHTML != document.getElementById("advantures-data").innerHTML) {
         document.getElementById("advantures-data").innerHTML = "";
         document.getElementById("advantures-data").appendChild(newAdventuresElement);
     }
 
-    const newAdventurersElement = getAdventurers(state);
+    const newAdventurersElement = getAdventurers(store);
     if (newAdventurersElement.outerHTML != document.getElementById("party-data").innerHTML) {
         document.getElementById("party-data").innerHTML = "";
         document.getElementById("party-data").appendChild(newAdventurersElement);
     }
+
+    const newLogElement = getLog(store);
+    if (newLogElement.outerHTML != document.getElementById("quest-log").innerHTML) {
+        document.getElementById("quest-log").innerHTML = "";
+        document.getElementById("quest-log").appendChild(newLogElement);
+    }
+
 }
 
-function getPlayerElement(state) {
+function getPlayerElement(store) {
+    const state = store.getState();
     const playerContainer = document.createElement("div");
     const player = state.party.adventurers[0];
     playerContainer.innerHTML = `
@@ -78,13 +87,20 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
     return adventureContainer;
 }
 
-function getPartyMembersSelector(selectedAdventurersIndexes, adventurers, onChange) {
-    const adventureElements = adventurers.map((adventurer, adventurerIndex) => {
+function getPartyMembersSelector(selectedAdventurersNames, adventurers, onChange) {
+    const adventureElements = adventurers.map((adventurer) => {
         const inputContainer = document.createElement("div");
         const inputElement = document.createElement("input");
         inputElement.type = "checkbox";
-        if (selectedAdventurersIndexes.indexOf(adventurerIndex) > -1) {
+        const isOnThisAdventure = selectedAdventurersNames.indexOf(adventurer.name) > -1;
+        const isOnAdventure = adventurer.currentQuest != null;
+        
+        if(isOnThisAdventure) {
             inputElement.checked = true;
+        } else {
+            if(isOnAdventure) {
+                inputElement.disabled = true;
+            }
         }
         inputElement.value = adventurer.name;
         inputElement.onchange = event => {
@@ -102,18 +118,20 @@ function getPartyMembersSelector(selectedAdventurersIndexes, adventurers, onChan
     return selector
 }
 
-function getAdventuresElement(state) {
+function getAdventuresElement(store) {
+    const state = store.getState();
     const availableAdventures = getAvailableAdventures(state);
     const buttons = availableAdventures.map(adventure => {
         const adventureIndex = state.adventures.indexOf(adventure);
-        return getAdventureElement(state, adventureIndex, () => doAction("start-quest", { adventureIndex: adventureIndex }));
+        return getAdventureElement(state, adventureIndex, () => startQuest(store, adventureIndex));
     });
     const buttonsContainer = document.createElement("div");
     buttons.forEach(button => buttonsContainer.appendChild(button));
     return buttonsContainer;
 };
 
-function getAdventurers(state) {
+function getAdventurers(store) {
+    const state = store.getState();
     const partyContainer = document.createElement("div");
     partyContainer.className = "party-container";
     state.party.adventurers.forEach(adventurer => {
@@ -121,6 +139,17 @@ function getAdventurers(state) {
         Member: ${adventurer.name} <br />
     `});
     return partyContainer;
+}
+
+function getLog(store) {
+    const state = store.getState();
+    const logContainer = document.createElement("div");
+    logContainer.className = "log-container";
+    state.log.forEach(line => {
+        logContainer.innerHTML += `
+        ${line} <br />
+    `});
+    return logContainer;
 }
 
 function getAvailableAdventures(state) {

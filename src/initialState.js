@@ -1,18 +1,4 @@
 export const initialState = {
-    player: {
-        maxHP: 100,
-        hp: 100,
-        gold: 100,
-        exp: 0,
-        expToNextLevel: 100,
-        level: 1,
-        hpRegain: 0.5,
-        isInAdventure: false,
-        stats: {
-            strength: 10,
-            agility: 5
-        }
-    },
     party: {
         adventurers: [
             {
@@ -51,6 +37,7 @@ export const initialState = {
     },
     adventures: [
         {
+            name: "the basics",
             description: "fetch",
             collectibles: 3,
             requiredLevel: 1,
@@ -67,6 +54,7 @@ export const initialState = {
             selectedPartyMembers: []
         },
         {
+            name: "hardcore orc beatings",
             description: "more fetch",
             collectibles: 3,
             requiredLevel: 2,
@@ -82,5 +70,6 @@ export const initialState = {
             },
             selectedPartyMembers: []
         }
-    ]
+    ],
+    log:[]
 };

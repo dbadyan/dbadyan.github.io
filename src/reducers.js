@@ -2,11 +2,13 @@ import * as ui from './ui';
 import * as actions from './actions';
 import * as store from './store';
 
-export function doAction(action, actionParams) {
+export function doAction(action, actionParams, logMessage) {
     let state = store.getState();
 
     console.log(Array.from(arguments));
-
+    if (logMessage) {
+        state = actions.writeToLog(state, logMessage);
+    }
     switch (action) {
         case "start-game":
             state = actions.startGame(state, actionParams.initialState);
@@ -32,17 +34,11 @@ export function doAction(action, actionParams) {
         case "level-up":
             state = actions.levelUp(state);
             break;
-        case "perform-round":
-            state = actions.performRound(state, actionParams.adventure);
-            break;
         case "send-adventurer-to-adventure":
             state = actions.sendAdventurerToAdventure(state, actionParams.adventureIndex, actionParams.adventurerIndex);
             break;
         case "return-adventurer-from-adventure":
             state = actions.returnAdventurerFromAdventure(state, actionParams.adventurerIndex);
-            break;
-        case "start-quest":
-            state = actions.startQuest(state,actionParams.adventureIndex);
             break;
         case "choose-adventurer-for-adventure":
             state = actions.chooseAdventurerForAdventure(state, actionParams.isAdventurerGoing, actionParams.adventurerName, actionParams.adventureIndex);
@@ -53,7 +49,7 @@ export function doAction(action, actionParams) {
 
     console.log(state);
 
-    ui.renderGame(state);
+    ui.renderGame(store);
 
     return state;
 }

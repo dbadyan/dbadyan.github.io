@@ -2243,7 +2243,7 @@ process.umask = function() { return 0; };
 /*!************************!*\
   !*** ./src/actions.js ***!
   \************************/
-/*! exports provided: changePlayerHP, giveThisManACookie, levelUp, rewardExp, changeEnemyHP, sendAdventurerToAdventure, returnAdventurerFromAdventure, collectFromAdventure, resetAdventure, startQuest, performRound, startGame, chooseAdventurerForAdventure */
+/*! exports provided: changePlayerHP, giveThisManACookie, levelUp, rewardExp, changeEnemyHP, sendAdventurerToAdventure, returnAdventurerFromAdventure, collectFromAdventure, resetAdventure, startGame, chooseAdventurerForAdventure, writeToLog */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2257,10 +2257,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "returnAdventurerFromAdventure", function() { return returnAdventurerFromAdventure; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "collectFromAdventure", function() { return collectFromAdventure; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "resetAdventure", function() { return resetAdventure; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startQuest", function() { return startQuest; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "performRound", function() { return performRound; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startGame", function() { return startGame; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "chooseAdventurerForAdventure", function() { return chooseAdventurerForAdventure; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "writeToLog", function() { return writeToLog; });
 /* harmony import */ var _reducers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./reducers */ "./src/reducers.js");
 /* harmony import */ var immer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! immer */ "./node_modules/immer/dist/immer.module.js");
 
@@ -2271,8 +2270,6 @@ function changePlayerHP(state, hpDelta) {
         const player = draftState.party.adventurers[0];
         draftState.party.adventurers[0].hp = Math.min(player.maxHP, Math.max(0, player.hp + hpDelta));
     })
-
-
 }
 
 function giveThisManACookie(state, gold) {
@@ -2296,7 +2293,6 @@ function rewardExp(state, exp) {
         draftState.party.adventurers[0].exp += exp;
         return draftState;
     })
-
 }
 
 function changeEnemyHP(state, adventureIndex, hpDelta) {
@@ -2329,59 +2325,11 @@ function resetAdventure(currentState, initialState, adventureIndex) {
         draftState.adventures[adventureIndex] = initialState.adventures[adventureIndex];
     })
 }
-function startQuest(state, adventureIndex) {
-    state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("send-adventurer-to-adventure", { adventureindex: adventureIndex, adventurerIndex: 0 });
-    state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("perform-round", { adventure: state.adventures[adventureIndex] });
-    return state;
-}
-function performRound(state, adventure) {
-    const adventureIndex = state.adventures.indexOf(adventure);
-    state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-enemy-hp", { adventureIndex: adventureIndex, hpDelta: -state.player.stats.strength });
-
-    if (isDead(state.adventures[adventureIndex].enemy)) {
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("give-this-man-a-cookie", { gold: state.adventures[adventureIndex].rewards.gold });
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reward-exp", { exp: state.adventures[adventureIndex].rewards.exp });
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
-        console.log("enemy dead");
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventure: state.adventures[adventureIndex], adventurerIndex: 0 });
-        return state;
-    }
-
-    state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-player-hp", { hpDelta: -state.adventures[adventureIndex].enemy.damage });
-    if (isDead(state.player)) {
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
-        console.log("you dead");
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventure: state.adventures[adventureIndex], adventurerIndex: 0 });
-        return state;
-    }
-
-    state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("collect-from-adventure", { adventureIndex: adventureIndex });
-    if (isCollected(state.adventures[adventureIndex])) {
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("give-this-man-a-cookie", { gold: state.adventures[adventureIndex].rewards.gold });
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reward-exp", { exp: state.adventures[adventureIndex].rewards.exp });
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
-        console.log("you got away");
-        state = Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventure: state.adventures[adventureIndex], adventurerIndex: 0 });
-        return state;
-    }
-
-    setTimeout(() => Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("perform-round", { adventure: state.adventures[adventureIndex] }), 2000);
-
-    return state;
-}
 
 function startGame(state, initialState) {
     let newState = JSON.parse(JSON.stringify(initialState))
     newState.initialState = JSON.parse(JSON.stringify(initialState));
     return newState;
-}
-
-function isCollected(adventure) {
-    return adventure.collectibles <= 0;
-}
-
-function isDead(character) {
-    return character.hp <= 0;
 }
 
 function chooseAdventurerForAdventure(currentState, isAdventurerGoing, adventurerName, adventureIndex) {
@@ -2391,6 +2339,11 @@ function chooseAdventurerForAdventure(currentState, isAdventurerGoing, adventure
         } else {
             draftState.adventures[adventureIndex].selectedPartyMembers = draftState.adventures[adventureIndex].selectedPartyMembers.filter(partyMember => partyMember !== adventurerName)
         }
+    })
+}
+function writeToLog(currentState,logMessage){
+    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(currentState, draftState => {
+        draftState.log.push(logMessage);
     })
 }
 
@@ -2416,7 +2369,7 @@ function healPlayer() {
     Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("change-player-hp", { hpDelta: _store__WEBPACK_IMPORTED_MODULE_2__["getState"]().player.hpRegain });
 }
 
-setInterval(healPlayer, 1000);
+// setInterval(healPlayer, 1000);
 
 Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("start-game", { initialState: _initialState__WEBPACK_IMPORTED_MODULE_0__["initialState"] });
 
@@ -2433,20 +2386,6 @@ Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("start-game", { initi
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "initialState", function() { return initialState; });
 const initialState = {
-    player: {
-        maxHP: 100,
-        hp: 100,
-        gold: 100,
-        exp: 0,
-        expToNextLevel: 100,
-        level: 1,
-        hpRegain: 0.5,
-        isInAdventure: false,
-        stats: {
-            strength: 10,
-            agility: 5
-        }
-    },
     party: {
         adventurers: [
             {
@@ -2485,6 +2424,7 @@ const initialState = {
     },
     adventures: [
         {
+            name: "the basics",
             description: "fetch",
             collectibles: 3,
             requiredLevel: 1,
@@ -2501,6 +2441,7 @@ const initialState = {
             selectedPartyMembers: []
         },
         {
+            name: "hardcore orc beatings",
             description: "more fetch",
             collectibles: 3,
             requiredLevel: 2,
@@ -2516,8 +2457,83 @@ const initialState = {
             },
             selectedPartyMembers: []
         }
-    ]
+    ],
+    log:[]
 };
+
+/***/ }),
+
+/***/ "./src/quests.js":
+/*!***********************!*\
+  !*** ./src/quests.js ***!
+  \***********************/
+/*! exports provided: startQuest, performRound */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startQuest", function() { return startQuest; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "performRound", function() { return performRound; });
+/* harmony import */ var _reducers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./reducers */ "./src/reducers.js");
+
+
+function startQuest(store, adventureIndex) {
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("send-adventurer-to-adventure", { adventureindex: adventureIndex, adventurerIndex: 0 }, "adventurers sent to " + store.getState().adventures[adventureIndex].name);
+    
+    const intervalId = setInterval(() => {
+        const roundResult = performRound(store, adventureIndex);
+        if (roundResult !== "CONTINUE") {
+            clearInterval(intervalId);
+        }
+    }, 2000);
+}
+
+function performRound(store, adventureIndex) {
+    const strengthSum = getPartyStrength(store.getState(), adventureIndex);
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-enemy-hp", { adventureIndex: adventureIndex, hpDelta: -strengthSum }, "damage done: " + strengthSum +" in the adventure " + store.getState().adventures[adventureIndex].name);
+
+    if (isDead(store.getState().adventures[adventureIndex].enemy)) {
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("give-this-man-a-cookie", { gold: store.getState().adventures[adventureIndex].rewards.gold }, "rewarded " + store.getState().adventures[adventureIndex].rewards.gold);
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reward-exp", { exp: store.getState().adventures[adventureIndex].rewards.exp }, "recieved " + store.getState().adventures[adventureIndex].rewards.exp + "exp");
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
+        console.log("enemy dead");
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventure: store.getState().adventures[adventureIndex], adventurerIndex: 0 });
+        return "ENEMY_DEAD";
+    }
+
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-player-hp", { hpDelta: -store.getState().adventures[adventureIndex].enemy.damage });
+    if (isDead(store.getState().party.adventurers[0])) {
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
+        console.log("you dead");
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventure: store.getState().adventures[adventureIndex], adventurerIndex: 0 });
+        return "PLAYER_DEAD";
+    }
+
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("collect-from-adventure", { adventureIndex: adventureIndex });
+    if (isCollected(store.getState().adventures[adventureIndex])) {
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("give-this-man-a-cookie", { gold: store.getState().adventures[adventureIndex].rewards.gold });
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reward-exp", { exp: store.getState().adventures[adventureIndex].rewards.exp });
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
+        console.log("you got away");
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventure: store.getState().adventures[adventureIndex], adventurerIndex: 0 });
+        return "PLAYER_ESCAPED";
+    }
+
+    return "CONTINUE"
+}
+
+function getPartyStrength(state, adventureindex) {
+    return state.party.adventurers.filter(member => {
+        return state.adventures[adventureindex].selectedPartyMembers.indexOf(member.name) > -1;
+    }).reduce((strengthSum, currentMember) => strengthSum + currentMember.stats.strength, 0)
+}
+function isCollected(adventure) {
+    return adventure.collectibles <= 0;
+}
+
+function isDead(character) {
+    return character.hp <= 0;
+}
 
 /***/ }),
 
@@ -2538,11 +2554,13 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-function doAction(action, actionParams) {
+function doAction(action, actionParams, logMessage) {
     let state = _store__WEBPACK_IMPORTED_MODULE_2__["getState"]();
 
     console.log(Array.from(arguments));
-
+    if (logMessage) {
+        state = _actions__WEBPACK_IMPORTED_MODULE_1__["writeToLog"](state, logMessage);
+    }
     switch (action) {
         case "start-game":
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["startGame"](state, actionParams.initialState);
@@ -2568,17 +2586,11 @@ function doAction(action, actionParams) {
         case "level-up":
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["levelUp"](state);
             break;
-        case "perform-round":
-            state = _actions__WEBPACK_IMPORTED_MODULE_1__["performRound"](state, actionParams.adventure);
-            break;
         case "send-adventurer-to-adventure":
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["sendAdventurerToAdventure"](state, actionParams.adventureIndex, actionParams.adventurerIndex);
             break;
         case "return-adventurer-from-adventure":
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["returnAdventurerFromAdventure"](state, actionParams.adventurerIndex);
-            break;
-        case "start-quest":
-            state = _actions__WEBPACK_IMPORTED_MODULE_1__["startQuest"](state,actionParams.adventureIndex);
             break;
         case "choose-adventurer-for-adventure":
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["chooseAdventurerForAdventure"](state, actionParams.isAdventurerGoing, actionParams.adventurerName, actionParams.adventureIndex);
@@ -2589,7 +2601,7 @@ function doAction(action, actionParams) {
 
     console.log(state);
 
-    _ui__WEBPACK_IMPORTED_MODULE_0__["renderGame"](state);
+    _ui__WEBPACK_IMPORTED_MODULE_0__["renderGame"](_store__WEBPACK_IMPORTED_MODULE_2__);
 
     return state;
 }
@@ -2630,30 +2642,40 @@ function setState(newState) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderGame", function() { return renderGame; });
 /* harmony import */ var _reducers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./reducers */ "./src/reducers.js");
+/* harmony import */ var _quests__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./quests */ "./src/quests.js");
 
 
-function renderGame(state) {
 
-    const newPlayerElement = getPlayerElement(state);
+function renderGame(store) {
+
+    const newPlayerElement = getPlayerElement(store);
     if (newPlayerElement.outerHTML != document.getElementById("player-data").innerHTML) {
         document.getElementById("player-data").innerHTML = "";
         document.getElementById("player-data").appendChild(newPlayerElement);
     }
 
-    const newAdventuresElement = getAdventuresElement(state);
+    const newAdventuresElement = getAdventuresElement(store);
     if (newAdventuresElement.outerHTML != document.getElementById("advantures-data").innerHTML) {
         document.getElementById("advantures-data").innerHTML = "";
         document.getElementById("advantures-data").appendChild(newAdventuresElement);
     }
 
-    const newAdventurersElement = getAdventurers(state);
+    const newAdventurersElement = getAdventurers(store);
     if (newAdventurersElement.outerHTML != document.getElementById("party-data").innerHTML) {
         document.getElementById("party-data").innerHTML = "";
         document.getElementById("party-data").appendChild(newAdventurersElement);
     }
+
+    const newLogElement = getLog(store);
+    if (newLogElement.outerHTML != document.getElementById("quest-log").innerHTML) {
+        document.getElementById("quest-log").innerHTML = "";
+        document.getElementById("quest-log").appendChild(newLogElement);
+    }
+
 }
 
-function getPlayerElement(state) {
+function getPlayerElement(store) {
+    const state = store.getState();
     const playerContainer = document.createElement("div");
     const player = state.party.adventurers[0];
     playerContainer.innerHTML = `
@@ -2710,13 +2732,20 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
     return adventureContainer;
 }
 
-function getPartyMembersSelector(selectedAdventurersIndexes, adventurers, onChange) {
-    const adventureElements = adventurers.map((adventurer, adventurerIndex) => {
+function getPartyMembersSelector(selectedAdventurersNames, adventurers, onChange) {
+    const adventureElements = adventurers.map((adventurer) => {
         const inputContainer = document.createElement("div");
         const inputElement = document.createElement("input");
         inputElement.type = "checkbox";
-        if (selectedAdventurersIndexes.indexOf(adventurerIndex) > -1) {
+        const isOnThisAdventure = selectedAdventurersNames.indexOf(adventurer.name) > -1;
+        const isOnAdventure = adventurer.currentQuest != null;
+        
+        if(isOnThisAdventure) {
             inputElement.checked = true;
+        } else {
+            if(isOnAdventure) {
+                inputElement.disabled = true;
+            }
         }
         inputElement.value = adventurer.name;
         inputElement.onchange = event => {
@@ -2734,18 +2763,20 @@ function getPartyMembersSelector(selectedAdventurersIndexes, adventurers, onChan
     return selector
 }
 
-function getAdventuresElement(state) {
+function getAdventuresElement(store) {
+    const state = store.getState();
     const availableAdventures = getAvailableAdventures(state);
     const buttons = availableAdventures.map(adventure => {
         const adventureIndex = state.adventures.indexOf(adventure);
-        return getAdventureElement(state, adventureIndex, () => Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("start-quest", { adventureIndex: adventureIndex }));
+        return getAdventureElement(state, adventureIndex, () => Object(_quests__WEBPACK_IMPORTED_MODULE_1__["startQuest"])(store, adventureIndex));
     });
     const buttonsContainer = document.createElement("div");
     buttons.forEach(button => buttonsContainer.appendChild(button));
     return buttonsContainer;
 };
 
-function getAdventurers(state) {
+function getAdventurers(store) {
+    const state = store.getState();
     const partyContainer = document.createElement("div");
     partyContainer.className = "party-container";
     state.party.adventurers.forEach(adventurer => {
@@ -2753,6 +2784,17 @@ function getAdventurers(state) {
         Member: ${adventurer.name} <br />
     `});
     return partyContainer;
+}
+
+function getLog(store) {
+    const state = store.getState();
+    const logContainer = document.createElement("div");
+    logContainer.className = "log-container";
+    state.log.forEach(line => {
+        logContainer.innerHTML += `
+        ${line} <br />
+    `});
+    return logContainer;
 }
 
 function getAvailableAdventures(state) {

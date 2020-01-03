@@ -6,6 +6,6 @@ function healPlayer() {
     doAction("change-player-hp", { hpDelta: store.getState().player.hpRegain });
 }
 
-setInterval(healPlayer, 1000);
+// setInterval(healPlayer, 1000);
 
 doAction("start-game", { initialState: initialState });

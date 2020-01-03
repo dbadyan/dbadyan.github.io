@@ -2302,15 +2302,23 @@ function changeEnemyHP(state, adventureIndex, hpDelta) {
 
 }
 
-function sendAdventurerToAdventure(state, adventureIndex, adventurerIndex) {
+function sendAdventurerToAdventure(state, adventureIndex, adventurerName) {
     return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
-        draftState.party.adventurers[adventurerIndex].currentQuest = adventureIndex;
+        draftState.party.adventurers.forEach(adventurer => {
+            if(adventurer.name == adventurerName) {
+                adventurer.currentQuest = adventureIndex;
+            }
+        })
     })
 }
 
-function returnAdventurerFromAdventure(state, adventurerIndex) {
+function returnAdventurerFromAdventure(state, adventurerName) {
     return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
-        draftState.party.adventurers[adventurerIndex].currentQuest = null;
+        draftState.party.adventurers.forEach(adventurer => {
+            if(adventurer.name == adventurerName) {
+                adventurer.currentQuest = null;
+            }
+        })
     })
 }
 
@@ -2328,7 +2336,9 @@ function resetAdventure(currentState, initialState, adventureIndex) {
 
 function startGame(state, initialState) {
     let newState = JSON.parse(JSON.stringify(initialState))
-    newState.initialState = JSON.parse(JSON.stringify(initialState));
+    if (newState.initialState === undefined) {
+        newState.initialState = JSON.parse(JSON.stringify(initialState));
+    }
     return newState;
 }
 
@@ -2370,8 +2380,14 @@ function healPlayer() {
 }
 
 // setInterval(healPlayer, 1000);
+if (localStorage.getItem('game')) {
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("start-game",{initialState: JSON.parse(localStorage.getItem('game'))});
+}
+else
+{
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("start-game", { initialState: _initialState__WEBPACK_IMPORTED_MODULE_0__["initialState"] });
+}
 
-Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("start-game", { initialState: _initialState__WEBPACK_IMPORTED_MODULE_0__["initialState"] });
 
 /***/ }),
 
@@ -2478,8 +2494,15 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function startQuest(store, adventureIndex) {
-    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("send-adventurer-to-adventure", { adventureindex: adventureIndex, adventurerIndex: 0 }, "adventurers sent to " + store.getState().adventures[adventureIndex].name);
-    
+
+    if (store.getState().adventures[adventureIndex].selectedPartyMembers.length === 0) {
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])('choose-adventurer-for-adventure', { adventureIndex: adventureIndex, adventurerName: "player1", isAdventurerGoing: true });
+    }
+
+    store.getState().adventures[adventureIndex].selectedPartyMembers.forEach(adventurerName => {
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("send-adventurer-to-adventure", { adventureIndex: adventureIndex, adventurerName: adventurerName }, "adventurers sent to " + store.getState().adventures[adventureIndex].name);
+    });
+
     const intervalId = setInterval(() => {
         const roundResult = performRound(store, adventureIndex);
         if (roundResult !== "CONTINUE") {
@@ -2490,22 +2513,26 @@ function startQuest(store, adventureIndex) {
 
 function performRound(store, adventureIndex) {
     const strengthSum = getPartyStrength(store.getState(), adventureIndex);
-    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-enemy-hp", { adventureIndex: adventureIndex, hpDelta: -strengthSum }, "damage done: " + strengthSum +" in the adventure " + store.getState().adventures[adventureIndex].name);
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-enemy-hp", { adventureIndex: adventureIndex, hpDelta: -strengthSum }, "damage done: " + strengthSum + " in the adventure " + store.getState().adventures[adventureIndex].name);
 
     if (isDead(store.getState().adventures[adventureIndex].enemy)) {
-        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("give-this-man-a-cookie", { gold: store.getState().adventures[adventureIndex].rewards.gold }, "rewarded " + store.getState().adventures[adventureIndex].rewards.gold);
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("give-this-man-a-cookie", { gold: store.getState().adventures[adventureIndex].rewards.gold }, "rewarded " + store.getState().adventures[adventureIndex].rewards.gold + " gold");
         Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reward-exp", { exp: store.getState().adventures[adventureIndex].rewards.exp }, "recieved " + store.getState().adventures[adventureIndex].rewards.exp + "exp");
-        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
         console.log("enemy dead");
-        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventure: store.getState().adventures[adventureIndex], adventurerIndex: 0 });
+        store.getState().adventures[adventureIndex].selectedPartyMembers.forEach(adventurerName => {
+            Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventurerName: adventurerName }, "adventurers returned from " + store.getState().adventures[adventureIndex].name);
+        });
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
         return "ENEMY_DEAD";
     }
 
     Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-player-hp", { hpDelta: -store.getState().adventures[adventureIndex].enemy.damage });
     if (isDead(store.getState().party.adventurers[0])) {
-        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
         console.log("you dead");
-        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventure: store.getState().adventures[adventureIndex], adventurerIndex: 0 });
+        store.getState().adventures[adventureIndex].selectedPartyMembers.forEach(adventurerName => {
+            Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventurerName: adventurerName }, "adventurers returned from " + store.getState().adventures[adventureIndex].name);
+        });
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
         return "PLAYER_DEAD";
     }
 
@@ -2513,9 +2540,11 @@ function performRound(store, adventureIndex) {
     if (isCollected(store.getState().adventures[adventureIndex])) {
         Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("give-this-man-a-cookie", { gold: store.getState().adventures[adventureIndex].rewards.gold });
         Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reward-exp", { exp: store.getState().adventures[adventureIndex].rewards.exp });
-        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
         console.log("you got away");
-        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventure: store.getState().adventures[adventureIndex], adventurerIndex: 0 });
+        store.getState().adventures[adventureIndex].selectedPartyMembers.forEach(adventurerName => {
+            Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("return-adventurer-from-adventure", { adventurerName: adventurerName }, "adventurers returned from " + store.getState().adventures[adventureIndex].name);
+        });
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("reset-adventure", { adventureIndex: adventureIndex });
         return "PLAYER_ESCAPED";
     }
 
@@ -2587,16 +2616,17 @@ function doAction(action, actionParams, logMessage) {
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["levelUp"](state);
             break;
         case "send-adventurer-to-adventure":
-            state = _actions__WEBPACK_IMPORTED_MODULE_1__["sendAdventurerToAdventure"](state, actionParams.adventureIndex, actionParams.adventurerIndex);
+            state = _actions__WEBPACK_IMPORTED_MODULE_1__["sendAdventurerToAdventure"](state, actionParams.adventureIndex, actionParams.adventurerName);
             break;
         case "return-adventurer-from-adventure":
-            state = _actions__WEBPACK_IMPORTED_MODULE_1__["returnAdventurerFromAdventure"](state, actionParams.adventurerIndex);
+            state = _actions__WEBPACK_IMPORTED_MODULE_1__["returnAdventurerFromAdventure"](state, actionParams.adventurerName);
             break;
         case "choose-adventurer-for-adventure":
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["chooseAdventurerForAdventure"](state, actionParams.isAdventurerGoing, actionParams.adventurerName, actionParams.adventureIndex);
             break;
     }
-
+    localStorage.setItem('game', JSON.stringify(state));
+    console.log(localStorage);
     _store__WEBPACK_IMPORTED_MODULE_2__["setState"](state);
 
     console.log(state);
@@ -2724,7 +2754,7 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
         Reward: ${adventure.rewards.gold} gold | ${adventure.rewards.exp} exp <br />
         Party Member:
     `;
-    adventureContainer.appendChild(getPartyMembersSelector(adventure.selectedPartyMembers, state.party.adventurers, (isAdventurerGoing, adventurerName) => {
+    adventureContainer.appendChild(getPartyMembersSelector(state, adventureIndex, state.party.adventurers, (isAdventurerGoing, adventurerName) => {
         Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("choose-adventurer-for-adventure", {isAdventurerGoing, adventurerName, adventureIndex})
     }))
     adventureContainer.appendChild(button);
@@ -2732,18 +2762,19 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
     return adventureContainer;
 }
 
-function getPartyMembersSelector(selectedAdventurersNames, adventurers, onChange) {
+function getPartyMembersSelector(state, adventureIndex, adventurers, onChange) {
     const adventureElements = adventurers.map((adventurer) => {
         const inputContainer = document.createElement("div");
         const inputElement = document.createElement("input");
         inputElement.type = "checkbox";
-        const isOnThisAdventure = selectedAdventurersNames.indexOf(adventurer.name) > -1;
-        const isOnAdventure = adventurer.currentQuest != null;
+        const isSelectedOnThisAdventure = state.adventures[adventureIndex].selectedPartyMembers.indexOf(adventurer.name) > -1;
+        const isWentOnAnotherAdventure = adventurer.currentQuest !== null && adventurer.currentQuest !== adventureIndex;
+        const isSelectedForAnotherAdventure = state.adventures.filter(adventure => adventure.selectedPartyMembers.indexOf(adventurer.name) > -1).length > 0;
         
-        if(isOnThisAdventure) {
+        if(isSelectedOnThisAdventure && !isWentOnAnotherAdventure) {
             inputElement.checked = true;
         } else {
-            if(isOnAdventure) {
+            if(isSelectedForAnotherAdventure) {
                 inputElement.disabled = true;
             }
         }

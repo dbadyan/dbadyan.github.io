@@ -1,8 +1,8 @@
 <!--TODO: 
 1. show party members to choose only when they become available
-2.replace perform round to not be an action - maybe
-3. cache memory
+3. cache memory - enable during adventure
 4. hot reloading
+5. disable checkboxes on adventurers that went on an adventure
 -->
 <html>
 <style>
@@ -19,7 +19,7 @@
         Player:
     </h3>
     <div id="player-data"></div>
-
+    <button onclick="localStorage.clear(); window.location.reload();">Clear Storage </button>
     <h3>Adventures:</h3>
     <div id="advantures-data"></div>
     

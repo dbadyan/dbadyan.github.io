@@ -35,16 +35,17 @@ export function doAction(action, actionParams, logMessage) {
             state = actions.levelUp(state);
             break;
         case "send-adventurer-to-adventure":
-            state = actions.sendAdventurerToAdventure(state, actionParams.adventureIndex, actionParams.adventurerIndex);
+            state = actions.sendAdventurerToAdventure(state, actionParams.adventureIndex, actionParams.adventurerName);
             break;
         case "return-adventurer-from-adventure":
-            state = actions.returnAdventurerFromAdventure(state, actionParams.adventurerIndex);
+            state = actions.returnAdventurerFromAdventure(state, actionParams.adventurerName);
             break;
         case "choose-adventurer-for-adventure":
             state = actions.chooseAdventurerForAdventure(state, actionParams.isAdventurerGoing, actionParams.adventurerName, actionParams.adventureIndex);
             break;
     }
-
+    localStorage.setItem('game', JSON.stringify(state));
+    console.log(localStorage);
     store.setState(state);
 
     console.log(state);

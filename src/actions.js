@@ -38,15 +38,23 @@ export function changeEnemyHP(state, adventureIndex, hpDelta) {
 
 }
 
-export function sendAdventurerToAdventure(state, adventureIndex, adventurerIndex) {
+export function sendAdventurerToAdventure(state, adventureIndex, adventurerName) {
     return produce(state, draftState => {
-        draftState.party.adventurers[adventurerIndex].currentQuest = adventureIndex;
+        draftState.party.adventurers.forEach(adventurer => {
+            if(adventurer.name == adventurerName) {
+                adventurer.currentQuest = adventureIndex;
+            }
+        })
     })
 }
 
-export function returnAdventurerFromAdventure(state, adventurerIndex) {
+export function returnAdventurerFromAdventure(state, adventurerName) {
     return produce(state, draftState => {
-        draftState.party.adventurers[adventurerIndex].currentQuest = null;
+        draftState.party.adventurers.forEach(adventurer => {
+            if(adventurer.name == adventurerName) {
+                adventurer.currentQuest = null;
+            }
+        })
     })
 }
 
@@ -64,7 +72,9 @@ export function resetAdventure(currentState, initialState, adventureIndex) {
 
 export function startGame(state, initialState) {
     let newState = JSON.parse(JSON.stringify(initialState))
-    newState.initialState = JSON.parse(JSON.stringify(initialState));
+    if (newState.initialState === undefined) {
+        newState.initialState = JSON.parse(JSON.stringify(initialState));
+    }
     return newState;
 }
 

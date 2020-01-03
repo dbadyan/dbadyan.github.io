@@ -7,5 +7,10 @@ function healPlayer() {
 }
 
 // setInterval(healPlayer, 1000);
-
-doAction("start-game", { initialState: initialState });
+if (localStorage.getItem('game')) {
+    doAction("start-game",{initialState: JSON.parse(localStorage.getItem('game'))});
+}
+else
+{
+    doAction("start-game", { initialState: initialState });
+}

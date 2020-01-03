@@ -79,7 +79,7 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
         Reward: ${adventure.rewards.gold} gold | ${adventure.rewards.exp} exp <br />
         Party Member:
     `;
-    adventureContainer.appendChild(getPartyMembersSelector(adventure.selectedPartyMembers, state.party.adventurers, (isAdventurerGoing, adventurerName) => {
+    adventureContainer.appendChild(getPartyMembersSelector(state, adventureIndex, state.party.adventurers, (isAdventurerGoing, adventurerName) => {
         doAction("choose-adventurer-for-adventure", {isAdventurerGoing, adventurerName, adventureIndex})
     }))
     adventureContainer.appendChild(button);
@@ -87,18 +87,19 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
     return adventureContainer;
 }
 
-function getPartyMembersSelector(selectedAdventurersNames, adventurers, onChange) {
+function getPartyMembersSelector(state, adventureIndex, adventurers, onChange) {
     const adventureElements = adventurers.map((adventurer) => {
         const inputContainer = document.createElement("div");
         const inputElement = document.createElement("input");
         inputElement.type = "checkbox";
-        const isOnThisAdventure = selectedAdventurersNames.indexOf(adventurer.name) > -1;
-        const isOnAdventure = adventurer.currentQuest != null;
+        const isSelectedOnThisAdventure = state.adventures[adventureIndex].selectedPartyMembers.indexOf(adventurer.name) > -1;
+        const isWentOnAnotherAdventure = adventurer.currentQuest !== null && adventurer.currentQuest !== adventureIndex;
+        const isSelectedForAnotherAdventure = state.adventures.filter(adventure => adventure.selectedPartyMembers.indexOf(adventurer.name) > -1).length > 0;
         
-        if(isOnThisAdventure) {
+        if(isSelectedOnThisAdventure && !isWentOnAnotherAdventure) {
             inputElement.checked = true;
         } else {
-            if(isOnAdventure) {
+            if(isSelectedForAnotherAdventure) {
                 inputElement.disabled = true;
             }
         }

@@ -10,12 +10,7 @@ export function startQuest(store, adventureIndex) {
         doAction("send-adventurer-to-adventure", { adventureIndex: adventureIndex, adventurerName: adventurerName }, "adventurers sent to " + store.getState().adventures[adventureIndex].name);
     });
 
-    const intervalId = setInterval(() => {
-        const roundResult = performRound(store, adventureIndex);
-        if (roundResult !== "CONTINUE") {
-            clearInterval(intervalId);
-        }
-    }, 2000);
+    fight(store, adventureIndex);
 }
 
 export function performRound(store, adventureIndex) {
@@ -69,4 +64,13 @@ function isCollected(adventure) {
 
 function isDead(character) {
     return character.hp <= 0;
+}
+
+export function fight(store, adventureIndex) {
+    const intervalId = setInterval(() => {
+        const roundResult = performRound(store, adventureIndex);
+        if (roundResult !== "CONTINUE") {
+            clearInterval(intervalId);
+        }
+    }, 2000);
 }

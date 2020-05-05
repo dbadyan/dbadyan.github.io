@@ -11,7 +11,6 @@ export const initialState = {
                 expToNextLevel: 100,
                 level: 1,
                 hpRegain: 0.5,
-                isInAdventure: false,
                 stats: {
                     strength: 10,
                     agility: 5

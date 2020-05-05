@@ -11,10 +11,14 @@ export const initialState = {
                 expToNextLevel: 100,
                 level: 1,
                 hpRegain: 0.5,
+                equipment: [{
+                    name: "sword +5",
+                    modifier: 5
+                }],
                 stats: {
                     strength: 10,
                     agility: 5
-                }
+                },
             },
             {
                 currentQuest: null,

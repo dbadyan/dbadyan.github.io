@@ -2370,21 +2370,28 @@ function writeToLog(currentState,logMessage){
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _initialState__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./initialState */ "./src/initialState.js");
 /* harmony import */ var _reducers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./reducers */ "./src/reducers.js");
-/* harmony import */ var _store__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./store */ "./src/store.js");
+/* harmony import */ var _quests__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./quests */ "./src/quests.js");
+/* harmony import */ var _store__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./store */ "./src/store.js");
+
 
 
 
 
 function healPlayer() {
-    Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("change-player-hp", { hpDelta: _store__WEBPACK_IMPORTED_MODULE_2__["getState"]().player.hpRegain });
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("change-player-hp", { hpDelta: _store__WEBPACK_IMPORTED_MODULE_3__["getState"]().party.adventurers[0].hpRegain });
 }
 
-// setInterval(healPlayer, 1000);
+setInterval(healPlayer, 1000);
 if (localStorage.getItem('game')) {
-    Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("start-game",{initialState: JSON.parse(localStorage.getItem('game'))});
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("start-game", { initialState: JSON.parse(localStorage.getItem('game')) });
+    const currentAdventures = new Set(_store__WEBPACK_IMPORTED_MODULE_3__["getState"]().party.adventurers.map(adventurer => adventurer.currentQuest ));
+    currentAdventures.forEach(adventureIndex => {
+        if (adventureIndex != null) {
+            Object(_quests__WEBPACK_IMPORTED_MODULE_2__["fight"])(_store__WEBPACK_IMPORTED_MODULE_3__, adventureIndex)
+        }
+    });
 }
-else
-{
+else {
     Object(_reducers__WEBPACK_IMPORTED_MODULE_1__["doAction"])("start-game", { initialState: _initialState__WEBPACK_IMPORTED_MODULE_0__["initialState"] });
 }
 
@@ -2414,11 +2421,14 @@ const initialState = {
                 expToNextLevel: 100,
                 level: 1,
                 hpRegain: 0.5,
-                isInAdventure: false,
+                equipment: [{
+                    name: "sword +5",
+                    modifier: 5
+                }],
                 stats: {
                     strength: 10,
                     agility: 5
-                }
+                },
             },
             {
                 currentQuest: null,
@@ -2483,13 +2493,14 @@ const initialState = {
 /*!***********************!*\
   !*** ./src/quests.js ***!
   \***********************/
-/*! exports provided: startQuest, performRound */
+/*! exports provided: startQuest, performRound, fight */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startQuest", function() { return startQuest; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "performRound", function() { return performRound; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fight", function() { return fight; });
 /* harmony import */ var _reducers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./reducers */ "./src/reducers.js");
 
 
@@ -2503,12 +2514,7 @@ function startQuest(store, adventureIndex) {
         Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("send-adventurer-to-adventure", { adventureIndex: adventureIndex, adventurerName: adventurerName }, "adventurers sent to " + store.getState().adventures[adventureIndex].name);
     });
 
-    const intervalId = setInterval(() => {
-        const roundResult = performRound(store, adventureIndex);
-        if (roundResult !== "CONTINUE") {
-            clearInterval(intervalId);
-        }
-    }, 2000);
+    fight(store, adventureIndex);
 }
 
 function performRound(store, adventureIndex) {
@@ -2563,6 +2569,16 @@ function isCollected(adventure) {
 function isDead(character) {
     return character.hp <= 0;
 }
+
+function fight(store, adventureIndex) {
+    const intervalId = setInterval(() => {
+        const roundResult = performRound(store, adventureIndex);
+        if (roundResult !== "CONTINUE") {
+            clearInterval(intervalId);
+        }
+    }, 2000);
+}
+
 
 /***/ }),
 
@@ -2678,11 +2694,15 @@ __webpack_require__.r(__webpack_exports__);
 
 function renderGame(store) {
 
-    const newPlayerElement = getPlayerElement(store);
-    if (newPlayerElement.outerHTML != document.getElementById("player-data").innerHTML) {
-        document.getElementById("player-data").innerHTML = "";
-        document.getElementById("player-data").appendChild(newPlayerElement);
-    }
+    const player = store.getState().party.adventurers[0];
+    document.getElementById("player-hp-progress").style.width = Math.floor((player.hp * 100) / player.maxHP);
+    document.getElementById("player-exp-progress").style.width = Math.floor((player.exp * 100) / player.expToNextLevel);
+
+    document.getElementById("player-hp").title = player.hpRegain + "/s";
+    document.getElementById("player-gold").innerText = player.gold;
+    document.getElementById("player-strength").innerText = player.stats.strength + calculateItemStrength(store);
+    document.getElementById("player-agility").innerText = player.stats.agility;
+
 
     const newAdventuresElement = getAdventuresElement(store);
     if (newAdventuresElement.outerHTML != document.getElementById("advantures-data").innerHTML) {
@@ -2703,7 +2723,9 @@ function renderGame(store) {
     }
 
 }
-
+function calculateItemStrength(store) {
+    return store.getState().party.adventurers[0].equipment.map(x => x.modifier).reduce((a, b) => a + b)
+}
 function getPlayerElement(store) {
     const state = store.getState();
     const playerContainer = document.createElement("div");
@@ -2743,6 +2765,7 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
     const adventure = state.adventures[adventureIndex];
     const button = document.createElement("button");
     button.innerText = adventure.description;
+    button.classList = button.classList + " go-to-adventure"
     button.onclick = whatToDoWhenClicked;
     if (state.party.adventurers[0].currentQuest !== null) {
         button.disabled = true;
@@ -2755,7 +2778,7 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
         Party Member:
     `;
     adventureContainer.appendChild(getPartyMembersSelector(state, adventureIndex, state.party.adventurers, (isAdventurerGoing, adventurerName) => {
-        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("choose-adventurer-for-adventure", {isAdventurerGoing, adventurerName, adventureIndex})
+        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("choose-adventurer-for-adventure", { isAdventurerGoing, adventurerName, adventureIndex })
     }))
     adventureContainer.appendChild(button);
 
@@ -2770,11 +2793,11 @@ function getPartyMembersSelector(state, adventureIndex, adventurers, onChange) {
         const isSelectedOnThisAdventure = state.adventures[adventureIndex].selectedPartyMembers.indexOf(adventurer.name) > -1;
         const isWentOnAnotherAdventure = adventurer.currentQuest !== null && adventurer.currentQuest !== adventureIndex;
         const isSelectedForAnotherAdventure = state.adventures.filter(adventure => adventure.selectedPartyMembers.indexOf(adventurer.name) > -1).length > 0;
-        
-        if(isSelectedOnThisAdventure && !isWentOnAnotherAdventure) {
+
+        if (isSelectedOnThisAdventure && !isWentOnAnotherAdventure) {
             inputElement.checked = true;
         } else {
-            if(isSelectedForAnotherAdventure) {
+            if (isSelectedForAnotherAdventure) {
                 inputElement.disabled = true;
             }
         }

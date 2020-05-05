@@ -6,21 +6,123 @@
 -->
 <html>
 <style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: #472818;
+}
+
 .stat-name {
     font-weight: bold;
 }
 .adventure-container {
     margin: 10px;
     border: 1px solid black;
+    background: rgba(240, 141, 31, 0.44);
+    padding: 5px;
+    position: relative;
+    box-shadow: 6px 6px 17px 0px rgba(0,0,0,1);
+}
+
+#player-data {
+    border: 1px solid #33190c;
+    background-color: #683a23;
+    width: 330px;
+    height: 500px;
+    background-image: url(https://svgsilh.com/svg/146232.svg);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: right;
+}
+
+.progress-bar-container {
+    margin: 10px 0 0 10px;
+    width: 100px;
+    height: 20px;
+    position: relative;
+    border: 1px solid black;
+}
+
+.progress-bar-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+
+#player-hp-progress {
+    background-color: red;
+}
+
+#player-exp-progress {
+    background-color: green;
+}
+
+#player-data-list {
+    list-style: bengali;
+    margin-left: -10px;
+}
+
+#advantures-data {
+    background-image: url(img/notice_board.jpg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    position: absolute;
+    width: 515px;
+    height: 344px;
+    top: 20px;
+    right: 50px;
+    box-shadow: 6px 6px 17px 0px rgba(0,0,0,1);
+    padding: 52px 22px 24px 22px;
+}
+
+.go-to-adventure {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 3px solid #522f11;
+    background: #7f4b1f;
+    color: #ffe3cc;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100px;
+    height: 30px;
+}
+
+.go-to-adventure:hover {
+    background: #aa6429;
 }
 </style>
 <body>
-    <h3>
-        Player:
-    </h3>
-    <div id="player-data"></div>
-    <button onclick="localStorage.clear(); window.location.reload();">Clear Storage </button>
-    <h3>Adventures:</h3>
+    <div id="player-data">
+        <div id="player-hp" class="progress-bar-container">
+            <div id="player-hp-progress" class="progress-bar-progress"></div>
+        </div>
+        <div id="player-exp" class="progress-bar-container">
+            <div id="player-exp-progress" class="progress-bar-progress"></div>
+        </div>
+        <div id="raw-player-data">
+            <ul id="player-data-list">
+                <li>
+                    <span class="stat-name">Gold</span>: 
+                    <span id="player-gold"></span>
+                </li>
+                <li>
+                    <span class="stat-name">Strength</span>: 
+                    <span id="player-strength"></span>
+                </li>
+                <li>
+                    <span class="stat-name">Agility</span>: 
+                    <span id="player-agility"></span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
     <div id="advantures-data"></div>
     
     <h3>Party:</h3>
@@ -29,6 +131,7 @@
     <h3>Quest LOG:</h3>
     <div id="quest-log"></div>
 
+    <button onclick="localStorage.clear(); window.location.reload();">Clear Storage </button>
     <script src="dist/main.js"></script>
 </body>
 

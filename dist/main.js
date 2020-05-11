@@ -2243,7 +2243,7 @@ process.umask = function() { return 0; };
 /*!************************!*\
   !*** ./src/actions.js ***!
   \************************/
-/*! exports provided: changePlayerHP, giveThisManACookie, levelUp, rewardExp, changeEnemyHP, sendAdventurerToAdventure, returnAdventurerFromAdventure, collectFromAdventure, resetAdventure, startGame, chooseAdventurerForAdventure, writeToLog */
+/*! exports provided: changePlayerHP, giveThisManACookie, levelUp, rewardExp, changeEnemyHP, sendAdventurerToAdventure, returnAdventurerFromAdventure, collectFromAdventure, resetAdventure, startGame, chooseAdventurerForAdventure, writeToLog, equipItem */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2260,37 +2260,42 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startGame", function() { return startGame; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "chooseAdventurerForAdventure", function() { return chooseAdventurerForAdventure; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "writeToLog", function() { return writeToLog; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "equipItem", function() { return equipItem; });
 /* harmony import */ var _reducers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./reducers */ "./src/reducers.js");
 /* harmony import */ var immer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! immer */ "./node_modules/immer/dist/immer.module.js");
+/* harmony import */ var _characterUtils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./characterUtils */ "./src/characterUtils.js");
 
 
+
+
+Object(immer__WEBPACK_IMPORTED_MODULE_1__["setAutoFreeze"])(false)
 
 function changePlayerHP(state, hpDelta) {
     return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
-        const player = draftState.party.adventurers[0];
-        draftState.party.adventurers[0].hp = Math.min(player.maxHP, Math.max(0, player.hp + hpDelta));
+        const player = Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState);
+        player.hp = Math.min(player.maxHP, Math.max(0, player.hp + hpDelta));
     })
 }
 
 function giveThisManACookie(state, gold) {
     return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
-        draftState.party.adventurers[0].gold += gold;
+        Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).gold += gold;
     })
 }
 
 function levelUp(state) {
     return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
-        draftState.party.adventurers[0].level += 1;
-        draftState.party.adventurers[0].expToNextLevel += (draftState.party.adventurers[0].level * 300)
+        Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).level += 1;
+        Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).expToNextLevel += (Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).level * Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).level * 300)
     })
 }
 
 function rewardExp(state, exp) {
     return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
-        while (draftState.party.adventurers[0].expToNextLevel <= exp + draftState.party.adventurers[0].exp) {
+        while (Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).expToNextLevel <= exp + Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).exp) {
             draftState = Object(immer__WEBPACK_IMPORTED_MODULE_1__["createDraft"])(Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("level-up", draftState));
         }
-        draftState.party.adventurers[0].exp += exp;
+        Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).exp += exp;
         return draftState;
     })
 }
@@ -2351,10 +2356,112 @@ function chooseAdventurerForAdventure(currentState, isAdventurerGoing, adventure
         }
     })
 }
+
 function writeToLog(currentState,logMessage){
     return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(currentState, draftState => {
         draftState.log.push(logMessage);
     })
+}
+
+function equipItem(state, itemName) {
+    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
+        Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).equipment[itemName].equipped = true;
+    })
+}
+
+/***/ }),
+
+/***/ "./src/characterUtils.js":
+/*!*******************************!*\
+  !*** ./src/characterUtils.js ***!
+  \*******************************/
+/*! exports provided: calculateItemStrength, calculateItemDefense, getPlayerFromState */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "calculateItemStrength", function() { return calculateItemStrength; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "calculateItemDefense", function() { return calculateItemDefense; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getPlayerFromState", function() { return getPlayerFromState; });
+function calculateItemStrength(state) {
+    return Object.values(getPlayerFromState(state).equipment)
+                                        .filter(item => item)
+                                        .map(x => x.modifiers.strength || 0)
+                                        .reduce((a, b) => a + b, 0)
+}
+
+function calculateItemDefense(state) {
+    return Object.values(getPlayerFromState(state).equipment)
+                                        .filter(item => item)
+                                        .map(x => x.modifiers.defense || 0)
+                                        .reduce((a, b) => a + b, 0)
+}
+
+function getPlayerFromState(state) {
+    return state.party.adventurers[0];
+}
+
+
+
+/***/ }),
+
+/***/ "./src/fe.js":
+/*!*******************!*\
+  !*** ./src/fe.js ***!
+  \*******************/
+/*! exports provided: renderWhenNeeded */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderWhenNeeded", function() { return renderWhenNeeded; });
+const renderersDependencies = {};
+
+function deepProxy(onAccess, target) {
+    return new Proxy(target, {
+        get(target, property) {
+            onAccess(property);
+            const item = target[property]
+            if (item && typeof item === 'object') {
+                return deepProxy(onAccess.bind(null, property), item);
+            }
+            return item
+        }
+    });
+}
+
+function removeSubstrings(strings) {
+    return strings.filter(str => {
+        return !strings.some(biggerString => {
+            return biggerString.startsWith(str + ".")
+        });
+    });
+}
+
+function getProp(obj, propPath) {
+    return propPath.split(".").reduce((o, prop) => o[prop], obj);
+}
+
+function isStateChanged(prevState, newState, props) {
+    return props.some(prop => {
+        return getProp(prevState, prop) !== getProp(newState, prop)
+    });
+}
+
+function renderWhenNeeded(name, func, prevState, newState) {
+    const fDeps = renderersDependencies[name] || [];
+
+    const proxiedNewState = deepProxy(function() {
+        const currentDeps = renderersDependencies[name] || [];
+        const path = Array.from(arguments).join(".");
+        currentDeps.push(path);
+        const newDeps = Array.from(new Set(removeSubstrings(currentDeps)));
+        renderersDependencies[name] = newDeps;
+    }, newState);
+
+    if(fDeps.length === 0 || isStateChanged(prevState, newState, fDeps)) {
+        func(proxiedNewState);
+    }
 }
 
 /***/ }),
@@ -2421,13 +2528,28 @@ const initialState = {
                 expToNextLevel: 100,
                 level: 1,
                 hpRegain: 0.5,
-                equipment: [{
-                    name: "sword +5",
-                    modifier: 5
-                }],
+                equipment: {
+                    "left-hand": {
+                        name: "shield +10",
+                        id: "shield_10",
+                        modifiers: {
+                            defense: 10
+                        },
+                        slots: ["left-hand"]
+                    },
+                    "right-hand": {
+                        name: "sword +5",
+                        id: "sword_5",
+                        modifiers: {
+                            strength: 5
+                        },
+                        slots: ["left-hand", "right-hand"]
+                    }
+                },
                 stats: {
                     strength: 10,
-                    agility: 5
+                    agility: 5,
+                    defense: 0
                 },
             },
             {
@@ -2448,6 +2570,23 @@ const initialState = {
             },
         ]
     },
+    inventory: [{
+            name: "shield +10",
+            id: "shield_10",
+            modifiers: {
+                defense: 10
+            },
+            slots: ["left-hand"]
+        },
+        {
+            name: "sword +5",
+            id: "sword_5",
+            modifiers: {
+                strength: 5
+            },
+            slots: ["left-hand", "right-hand"]
+        }
+    ],
     adventures: [
         {
             name: "the basics",
@@ -2502,6 +2641,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "performRound", function() { return performRound; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fight", function() { return fight; });
 /* harmony import */ var _reducers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./reducers */ "./src/reducers.js");
+/* harmony import */ var _characterUtils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./characterUtils */ "./src/characterUtils.js");
+    
 
 
 function startQuest(store, adventureIndex) {
@@ -2518,8 +2659,8 @@ function startQuest(store, adventureIndex) {
 }
 
 function performRound(store, adventureIndex) {
-    const strengthSum = getPartyStrength(store.getState(), adventureIndex);
-    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-enemy-hp", { adventureIndex: adventureIndex, hpDelta: -strengthSum }, "damage done: " + strengthSum + " in the adventure " + store.getState().adventures[adventureIndex].name);
+    const strengthSum = getPartyStrength(store.getState(), adventureIndex) + Object(_characterUtils__WEBPACK_IMPORTED_MODULE_1__["calculateItemStrength"])(store.getState());
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-enemy-hp", { adventureIndex: adventureIndex, hpDelta: -strengthSum}, "damage done: " + strengthSum + " in the adventure " + store.getState().adventures[adventureIndex].name);
 
     if (isDead(store.getState().adventures[adventureIndex].enemy)) {
         Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("give-this-man-a-cookie", { gold: store.getState().adventures[adventureIndex].rewards.gold }, "rewarded " + store.getState().adventures[adventureIndex].rewards.gold + " gold");
@@ -2532,7 +2673,7 @@ function performRound(store, adventureIndex) {
         return "ENEMY_DEAD";
     }
 
-    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-player-hp", { hpDelta: -store.getState().adventures[adventureIndex].enemy.damage });
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("change-player-hp", { hpDelta: Math.min(0, Object(_characterUtils__WEBPACK_IMPORTED_MODULE_1__["calculateItemDefense"])(store.getState()) - store.getState().adventures[adventureIndex].enemy.damage) });
     if (isDead(store.getState().party.adventurers[0])) {
         console.log("you dead");
         store.getState().adventures[adventureIndex].selectedPartyMembers.forEach(adventurerName => {
@@ -2658,22 +2799,31 @@ function doAction(action, actionParams, logMessage) {
 /*!**********************!*\
   !*** ./src/store.js ***!
   \**********************/
-/*! exports provided: getState, setState */
+/*! exports provided: getPrevState, getState, setState */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getPrevState", function() { return getPrevState; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getState", function() { return getState; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setState", function() { return setState; });
+let prevState = null;
 let state = {};
+
+function getPrevState() {
+    return prevState;
+}
 
 function getState() {
     return state;
 }
 
 function setState(newState) {
+    prevState = state;
     state = newState;
 }
+
+window.getState = () => state;
 
 /***/ }),
 
@@ -2689,20 +2839,80 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderGame", function() { return renderGame; });
 /* harmony import */ var _reducers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./reducers */ "./src/reducers.js");
 /* harmony import */ var _quests__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./quests */ "./src/quests.js");
+/* harmony import */ var _characterUtils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./characterUtils */ "./src/characterUtils.js");
+/* harmony import */ var _fe__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./fe */ "./src/fe.js");
 
 
+
+
+
+function abbreviateNumber(value) {
+    let newValue = value;
+    const suffixes = ["", "K", "M", "B","T"];
+    let suffixNum = 0;
+    while (newValue >= 1000) {
+      newValue /= 1000;
+      suffixNum++;
+    }
+  
+    newValue = Math.round((newValue + Number.EPSILON) * 100) / 100;
+  
+    newValue += suffixes[suffixNum];
+    return newValue;
+  }
+
+function renderPlayerHP(state) {
+    const player = Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state);
+    document.getElementById("player-hp-progress").style.width = Math.floor((player.hp * 100) / player.maxHP) + "%";
+    document.getElementById("player-hp").title = player.hpRegain + "/s";
+    document.getElementById("player-hp-value").innerText = abbreviateNumber(player.hp);
+}
+
+function renderPlayerXP(state) {
+    const player = Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state);
+    document.getElementById("player-exp-progress").style.width = Math.floor((player.exp * 100) / player.expToNextLevel) + "%";
+    document.getElementById("player-exp-value").innerText = abbreviateNumber(player.exp) + "/" + abbreviateNumber(player.expToNextLevel);
+    document.getElementById("player-level").innerText = abbreviateNumber(player.level);
+}
+
+function renderPlayerGold(state) {
+    const player = Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state);
+    document.getElementById("player-gold").innerText = abbreviateNumber(player.gold);
+}
+
+function renderPlayerStrength(state) {
+    const player = Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state);
+    document.getElementById("player-strength").innerText = abbreviateNumber(player.stats.strength) + " (+" + abbreviateNumber(Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["calculateItemStrength"])(state)) + ")";
+}
+
+function renderPlayerAgility(state) {
+    const player = Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state);
+    document.getElementById("player-agility").innerText = abbreviateNumber(player.stats.agility);
+}
+function renderPlayerDefense(state) {
+    const player = Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state);
+    document.getElementById("player-defense").innerText = abbreviateNumber(player.stats.defense) + " (+" + abbreviateNumber(Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["calculateItemDefense"])(state)) + ")";;
+}
+
+function renderInventory(state) {
+    document.getElementById("inventory").innerHTML = "";
+    document.getElementById("inventory").appendChild(getItemsContainer(state.inventory));
+}
 
 function renderGame(store) {
+    const renderers = {
+        renderPlayerHP,
+        renderPlayerXP,
+        renderPlayerGold,
+        renderPlayerStrength,
+        renderPlayerAgility,
+        renderPlayerDefense,
+        renderInventory
+    }
 
-    const player = store.getState().party.adventurers[0];
-    document.getElementById("player-hp-progress").style.width = Math.floor((player.hp * 100) / player.maxHP);
-    document.getElementById("player-exp-progress").style.width = Math.floor((player.exp * 100) / player.expToNextLevel);
-
-    document.getElementById("player-hp").title = player.hpRegain + "/s";
-    document.getElementById("player-gold").innerText = player.gold;
-    document.getElementById("player-strength").innerText = player.stats.strength + calculateItemStrength(store);
-    document.getElementById("player-agility").innerText = player.stats.agility;
-
+    Object.keys(renderers).forEach(renderer => {
+        Object(_fe__WEBPACK_IMPORTED_MODULE_3__["renderWhenNeeded"])(renderer, renderers[renderer], store.getPrevState(), store.getState());
+    });
 
     const newAdventuresElement = getAdventuresElement(store);
     if (newAdventuresElement.outerHTML != document.getElementById("advantures-data").innerHTML) {
@@ -2723,42 +2933,19 @@ function renderGame(store) {
     }
 
 }
-function calculateItemStrength(store) {
-    return store.getState().party.adventurers[0].equipment.map(x => x.modifier).reduce((a, b) => a + b)
-}
-function getPlayerElement(store) {
-    const state = store.getState();
-    const playerContainer = document.createElement("div");
-    const player = state.party.adventurers[0];
-    playerContainer.innerHTML = `
-    <ul>
-        <li>
-            <span class="stat-name">HP</span>:
-            <span id="player-hp">${Math.ceil(player.hp)}</span>
-        </li>
-        <li>
-            <span class="stat-name">exp</span>: 
-            <span id="player-exp">${player.exp}/${player.expToNextLevel}</span>
-        </li>
-        <li>
-            <span class="stat-name">level</span>: 
-            <span id="player-level">${player.level}</span>
-        </li>
-        <li>
-            <span class="stat-name">gold</span>: 
-            <span id="player-gold">${player.gold}</span>
-        </li>
-        <li>
-            <span class="stat-name">strength</span>: 
-            <span id="player-strength">${player.stats.strength}</span>
-        </li>
-        <li>
-            <span class="stat-name">agility</span>: 
-            <span id="player-agility">${player.stats.agility}</span>
-        </li>
-    </ul>`;
-    return playerContainer;
 
+function getItemsContainer(items) {
+    const itemsContainer = document.createElement("div");
+    items.forEach(item => {
+        itemsContainer.appendChild(getItemElement(item));
+    });
+    return itemsContainer;
+}
+
+function getItemElement(item) {
+    const itemElement = document.createElement("div");
+    itemElement.className = item.id + " inventory-item";
+    return itemElement;
 }
 
 function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
@@ -2767,7 +2954,7 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
     button.innerText = adventure.description;
     button.classList = button.classList + " go-to-adventure"
     button.onclick = whatToDoWhenClicked;
-    if (state.party.adventurers[0].currentQuest !== null) {
+    if (Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state).currentQuest !== null) {
         button.disabled = true;
     }
     const adventureContainer = document.createElement("div");
@@ -2852,7 +3039,7 @@ function getLog(store) {
 }
 
 function getAvailableAdventures(state) {
-    return state.adventures.filter(adventure => state.party.adventurers[0].level >= adventure.requiredLevel)
+    return state.adventures.filter(adventure => Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state).level >= adventure.requiredLevel)
 }
 
 /***/ })

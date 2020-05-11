@@ -1,32 +1,35 @@
 import { doAction } from './reducers';
-import { produce, createDraft } from "immer";
+import { produce, createDraft, setAutoFreeze } from "immer";
+import { getPlayerFromState } from './characterUtils';
+
+setAutoFreeze(false)
 
 export function changePlayerHP(state, hpDelta) {
     return produce(state, draftState => {
-        const player = draftState.party.adventurers[0];
-        draftState.party.adventurers[0].hp = Math.min(player.maxHP, Math.max(0, player.hp + hpDelta));
+        const player = getPlayerFromState(draftState);
+        player.hp = Math.min(player.maxHP, Math.max(0, player.hp + hpDelta));
     })
 }
 
 export function giveThisManACookie(state, gold) {
     return produce(state, draftState => {
-        draftState.party.adventurers[0].gold += gold;
+        getPlayerFromState(draftState).gold += gold;
     })
 }
 
 export function levelUp(state) {
     return produce(state, draftState => {
-        draftState.party.adventurers[0].level += 1;
-        draftState.party.adventurers[0].expToNextLevel += (draftState.party.adventurers[0].level * 300)
+        getPlayerFromState(draftState).level += 1;
+        getPlayerFromState(draftState).expToNextLevel += (getPlayerFromState(draftState).level * getPlayerFromState(draftState).level * 300)
     })
 }
 
 export function rewardExp(state, exp) {
     return produce(state, draftState => {
-        while (draftState.party.adventurers[0].expToNextLevel <= exp + draftState.party.adventurers[0].exp) {
+        while (getPlayerFromState(draftState).expToNextLevel <= exp + getPlayerFromState(draftState).exp) {
             draftState = createDraft(doAction("level-up", draftState));
         }
-        draftState.party.adventurers[0].exp += exp;
+        getPlayerFromState(draftState).exp += exp;
         return draftState;
     })
 }
@@ -87,8 +90,15 @@ export function chooseAdventurerForAdventure(currentState, isAdventurerGoing, ad
         }
     })
 }
+
 export function writeToLog(currentState,logMessage){
     return produce(currentState, draftState => {
         draftState.log.push(logMessage);
+    })
+}
+
+export function equipItem(state, itemName) {
+    return produce(state, draftState => {
+        getPlayerFromState(draftState).equipment[itemName].equipped = true;
     })
 }

@@ -1,4 +1,5 @@
-import { doAction } from './reducers';
+    import { doAction } from './reducers';
+import { calculateItemStrength, calculateItemDefense } from './characterUtils';
 
 export function startQuest(store, adventureIndex) {
 
@@ -14,8 +15,8 @@ export function startQuest(store, adventureIndex) {
 }
 
 export function performRound(store, adventureIndex) {
-    const strengthSum = getPartyStrength(store.getState(), adventureIndex);
-    doAction("change-enemy-hp", { adventureIndex: adventureIndex, hpDelta: -strengthSum }, "damage done: " + strengthSum + " in the adventure " + store.getState().adventures[adventureIndex].name);
+    const strengthSum = getPartyStrength(store.getState(), adventureIndex) + calculateItemStrength(store.getState());
+    doAction("change-enemy-hp", { adventureIndex: adventureIndex, hpDelta: -strengthSum}, "damage done: " + strengthSum + " in the adventure " + store.getState().adventures[adventureIndex].name);
 
     if (isDead(store.getState().adventures[adventureIndex].enemy)) {
         doAction("give-this-man-a-cookie", { gold: store.getState().adventures[adventureIndex].rewards.gold }, "rewarded " + store.getState().adventures[adventureIndex].rewards.gold + " gold");
@@ -28,7 +29,7 @@ export function performRound(store, adventureIndex) {
         return "ENEMY_DEAD";
     }
 
-    doAction("change-player-hp", { hpDelta: -store.getState().adventures[adventureIndex].enemy.damage });
+    doAction("change-player-hp", { hpDelta: Math.min(0, calculateItemDefense(store.getState()) - store.getState().adventures[adventureIndex].enemy.damage) });
     if (isDead(store.getState().party.adventurers[0])) {
         console.log("you dead");
         store.getState().adventures[adventureIndex].selectedPartyMembers.forEach(adventurerName => {

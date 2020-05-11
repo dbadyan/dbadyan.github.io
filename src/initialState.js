@@ -11,13 +11,28 @@ export const initialState = {
                 expToNextLevel: 100,
                 level: 1,
                 hpRegain: 0.5,
-                equipment: [{
-                    name: "sword +5",
-                    modifier: 5
-                }],
+                equipment: {
+                    "left-hand": {
+                        name: "shield +10",
+                        id: "shield_10",
+                        modifiers: {
+                            defense: 10
+                        },
+                        slots: ["left-hand"]
+                    },
+                    "right-hand": {
+                        name: "sword +5",
+                        id: "sword_5",
+                        modifiers: {
+                            strength: 5
+                        },
+                        slots: ["left-hand", "right-hand"]
+                    }
+                },
                 stats: {
                     strength: 10,
-                    agility: 5
+                    agility: 5,
+                    defense: 0
                 },
             },
             {
@@ -38,6 +53,23 @@ export const initialState = {
             },
         ]
     },
+    inventory: [{
+            name: "shield +10",
+            id: "shield_10",
+            modifiers: {
+                defense: 10
+            },
+            slots: ["left-hand"]
+        },
+        {
+            name: "sword +5",
+            id: "sword_5",
+            modifiers: {
+                strength: 5
+            },
+            slots: ["left-hand", "right-hand"]
+        }
+    ],
     adventures: [
         {
             name: "the basics",

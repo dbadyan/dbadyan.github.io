@@ -6,12 +6,24 @@
 -->
 <html>
 <style>
+@font-face {
+    font-family: 'celexaregular';
+    src: url('fonts/celexa__-webfont.woff2') format('woff2'),
+         url('fonts/celexa__-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
 * {
     box-sizing: border-box;
 }
 
 body {
     background: #472818;
+}
+
+.awesome-font {
+    font-family: celexaregular;
 }
 
 .stat-name {
@@ -26,15 +38,30 @@ body {
     box-shadow: 6px 6px 17px 0px rgba(0,0,0,1);
 }
 
+#player-level {
+    border: 1px solid black;
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(240, 141, 31, 0.44);
+    font-size: 23pt;
+    text-align: center;
+    line-height: 50px;
+    box-shadow: inset 0px 0px 5px 0px rgba(0,0,0,1);
+}
+
 #player-data {
     border: 1px solid #33190c;
     background-color: #683a23;
-    width: 330px;
+    width: 360px;
     height: 500px;
     background-image: url(https://svgsilh.com/svg/146232.svg);
     background-size: contain;
     background-repeat: no-repeat;
     background-position: right;
+    position: relative;
 }
 
 .progress-bar-container {
@@ -54,6 +81,13 @@ body {
 
 #player-hp-progress {
     background-color: red;
+}
+
+.stat-value {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
 }
 
 #player-exp-progress {
@@ -96,15 +130,64 @@ body {
 .go-to-adventure:hover {
     background: #aa6429;
 }
+
+#inventory {
+    border: 1px solid black;
+    width: 360px;
+    height: 50px;
+    background-color: rgba(240, 141, 31, 0.44);
+    padding: 4px;
+}
+
+#inventory .inventory-item {
+    margin-left: 4px;
+}
+
+.inventory-item {
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+    border: 1px solid black;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.inventory-item.empty-inventory {
+    background-color:rgba(240, 141, 31, 0.3)   
+}
+
+.shield_10 {
+    background-image: url(img/items/shield_10.png);
+}
+
+.sword_5 {
+    background-image: url(img/items/sword_5.png);
+}
+
+#right-hand {
+    position: absolute;
+    top: 250px;
+    left: 145px;
+}
+
+#left-hand {
+    position: absolute;
+    top: 260px;
+    left: 292px;
+}
+
 </style>
 <body>
     <div id="player-data">
         <div id="player-hp" class="progress-bar-container">
             <div id="player-hp-progress" class="progress-bar-progress"></div>
+            <div id="player-hp-value" class="stat-value"></div>
         </div>
         <div id="player-exp" class="progress-bar-container">
             <div id="player-exp-progress" class="progress-bar-progress"></div>
+            <div id="player-exp-value" class="stat-value"></div>
         </div>
+        <div id="player-level" class="awesome-font"></div>
         <div id="raw-player-data">
             <ul id="player-data-list">
                 <li>
@@ -119,9 +202,20 @@ body {
                     <span class="stat-name">Agility</span>: 
                     <span id="player-agility"></span>
                 </li>
+                <li>
+                    <span class="stat-name">Defense</span>: 
+                    <span id="player-defense"></span>
+                </li>
             </ul>
         </div>
     </div>
+
+    <div id="equiped-items">
+        <div id="right-hand" class="inventory-item empty-inventory"></div>
+        <div id="left-hand" class="inventory-item empty-inventory"></div>
+    </div>
+
+    <div id="inventory"></div>
 
     <div id="advantures-data"></div>
     

@@ -1,17 +1,75 @@
 import { doAction } from './reducers';
 import { startQuest } from './quests';
+import { calculateItemStrength, calculateItemDefense, getPlayerFromState } from './characterUtils';
+import { renderWhenNeeded } from "./fe";
+
+function abbreviateNumber(value) {
+    let newValue = value;
+    const suffixes = ["", "K", "M", "B","T"];
+    let suffixNum = 0;
+    while (newValue >= 1000) {
+      newValue /= 1000;
+      suffixNum++;
+    }
+  
+    newValue = Math.round((newValue + Number.EPSILON) * 100) / 100;
+  
+    newValue += suffixes[suffixNum];
+    return newValue;
+  }
+
+function renderPlayerHP(state) {
+    const player = getPlayerFromState(state);
+    document.getElementById("player-hp-progress").style.width = Math.floor((player.hp * 100) / player.maxHP) + "%";
+    document.getElementById("player-hp").title = player.hpRegain + "/s";
+    document.getElementById("player-hp-value").innerText = abbreviateNumber(player.hp);
+}
+
+function renderPlayerXP(state) {
+    const player = getPlayerFromState(state);
+    document.getElementById("player-exp-progress").style.width = Math.floor((player.exp * 100) / player.expToNextLevel) + "%";
+    document.getElementById("player-exp-value").innerText = abbreviateNumber(player.exp) + "/" + abbreviateNumber(player.expToNextLevel);
+    document.getElementById("player-level").innerText = abbreviateNumber(player.level);
+}
+
+function renderPlayerGold(state) {
+    const player = getPlayerFromState(state);
+    document.getElementById("player-gold").innerText = abbreviateNumber(player.gold);
+}
+
+function renderPlayerStrength(state) {
+    const player = getPlayerFromState(state);
+    document.getElementById("player-strength").innerText = abbreviateNumber(player.stats.strength) + " (+" + abbreviateNumber(calculateItemStrength(state)) + ")";
+}
+
+function renderPlayerAgility(state) {
+    const player = getPlayerFromState(state);
+    document.getElementById("player-agility").innerText = abbreviateNumber(player.stats.agility);
+}
+function renderPlayerDefense(state) {
+    const player = getPlayerFromState(state);
+    document.getElementById("player-defense").innerText = abbreviateNumber(player.stats.defense) + " (+" + abbreviateNumber(calculateItemDefense(state)) + ")";;
+}
+
+function renderInventory(state) {
+    document.getElementById("inventory").innerHTML = "";
+    document.getElementById("inventory").appendChild(getItemsContainer(state.inventory));
+}
 
 export function renderGame(store) {
+    const renderers = {
+        renderPlayerHP,
+        renderPlayerXP,
+        renderPlayerGold,
+        renderPlayerStrength,
+        renderPlayerAgility,
+        renderPlayerDefense,
+        renderInventory
+    }
 
-    const player = store.getState().party.adventurers[0];
-    document.getElementById("player-hp-progress").style.width = Math.floor((player.hp * 100) / player.maxHP);
-    document.getElementById("player-exp-progress").style.width = Math.floor((player.exp * 100) / player.expToNextLevel);
-
-    document.getElementById("player-hp").title = player.hpRegain + "/s";
-    document.getElementById("player-gold").innerText = player.gold;
-    document.getElementById("player-strength").innerText = player.stats.strength + calculateItemStrength(store);
-    document.getElementById("player-agility").innerText = player.stats.agility;
-
+    Object.keys(renderers).forEach(renderer => {
+        renderWhenNeeded(renderer, renderers[renderer], store.getPrevState(), store.getState());
+    });
 
     const newAdventuresElement = getAdventuresElement(store);
     if (newAdventuresElement.outerHTML != document.getElementById("advantures-data").innerHTML) {
@@ -32,42 +90,19 @@ export function renderGame(store) {
     }
 
 }
-function calculateItemStrength(store) {
-    return store.getState().party.adventurers[0].equipment.map(x => x.modifier).reduce((a, b) => a + b)
-}
-function getPlayerElement(store) {
-    const state = store.getState();
-    const playerContainer = document.createElement("div");
-    const player = state.party.adventurers[0];
-    playerContainer.innerHTML = `
-    <ul>
-        <li>
-            <span class="stat-name">HP</span>:
-            <span id="player-hp">${Math.ceil(player.hp)}</span>
-        </li>
-        <li>
-            <span class="stat-name">exp</span>: 
-            <span id="player-exp">${player.exp}/${player.expToNextLevel}</span>
-        </li>
-        <li>
-            <span class="stat-name">level</span>: 
-            <span id="player-level">${player.level}</span>
-        </li>
-        <li>
-            <span class="stat-name">gold</span>: 
-            <span id="player-gold">${player.gold}</span>
-        </li>
-        <li>
-            <span class="stat-name">strength</span>: 
-            <span id="player-strength">${player.stats.strength}</span>
-        </li>
-        <li>
-            <span class="stat-name">agility</span>: 
-            <span id="player-agility">${player.stats.agility}</span>
-        </li>
-    </ul>`;
-    return playerContainer;
 
+function getItemsContainer(items) {
+    const itemsContainer = document.createElement("div");
+    items.forEach(item => {
+        itemsContainer.appendChild(getItemElement(item));
+    });
+    return itemsContainer;
+}
+
+function getItemElement(item) {
+    const itemElement = document.createElement("div");
+    itemElement.className = item.id + " inventory-item";
+    return itemElement;
 }
 
 function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
@@ -76,7 +111,7 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
     button.innerText = adventure.description;
     button.classList = button.classList + " go-to-adventure"
     button.onclick = whatToDoWhenClicked;
-    if (state.party.adventurers[0].currentQuest !== null) {
+    if (getPlayerFromState(state).currentQuest !== null) {
         button.disabled = true;
     }
     const adventureContainer = document.createElement("div");
@@ -161,5 +196,5 @@ function getLog(store) {
 }
 
 function getAvailableAdventures(state) {
-    return state.adventures.filter(adventure => state.party.adventurers[0].level >= adventure.requiredLevel)
+    return state.adventures.filter(adventure => getPlayerFromState(state).level >= adventure.requiredLevel)
 }

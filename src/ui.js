@@ -11,9 +11,9 @@ function abbreviateNumber(value) {
       newValue /= 1000;
       suffixNum++;
     }
-  
+
     newValue = Math.round((newValue + Number.EPSILON) * 100) / 100;
-  
+
     newValue += suffixes[suffixNum];
     return newValue;
   }
@@ -105,14 +105,23 @@ function getItemElement(item) {
     return itemElement;
 }
 
-function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
+function getAdventureElement(state, adventureIndex, onSendPlayer, onStartIdling) {
     const adventure = state.adventures[adventureIndex];
     const button = document.createElement("button");
-    button.innerText = adventure.description;
+    button.innerText = "Send selected";
     button.classList = button.classList + " go-to-adventure"
-    button.onclick = whatToDoWhenClicked;
+    button.onclick = onSendPlayer;
     if (getPlayerFromState(state).currentQuest !== null) {
         button.disabled = true;
+    }
+    if (adventure.selectedPartyMembers.length === 0) {
+      button.disabled = true;
+    }
+    const idleButton = document.createElement("button");
+    idleButton.innerText = "Start idling";
+    idleButton.onclick = onStartIdling;
+    if (adventure.selectedPartyMembers.length === 0) {
+      idleButton.disabled = true;
     }
     const adventureContainer = document.createElement("div");
     adventureContainer.className = "adventure-container";
@@ -125,7 +134,7 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
         doAction("choose-adventurer-for-adventure", { isAdventurerGoing, adventurerName, adventureIndex })
     }))
     adventureContainer.appendChild(button);
-
+    adventureContainer.appendChild(idleButton);
     return adventureContainer;
 }
 
@@ -166,7 +175,10 @@ function getAdventuresElement(store) {
     const availableAdventures = getAvailableAdventures(state);
     const buttons = availableAdventures.map(adventure => {
         const adventureIndex = state.adventures.indexOf(adventure);
-        return getAdventureElement(state, adventureIndex, () => startQuest(store, adventureIndex));
+        return getAdventureElement(state,
+                                   adventureIndex,
+                                   () => startQuest(store, adventureIndex),
+                                   () => startIdling(store, adventureIndex));
     });
     const buttonsContainer = document.createElement("div");
     buttons.forEach(button => buttonsContainer.appendChild(button));

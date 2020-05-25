@@ -127,8 +127,13 @@ body {
     height: 30px;
 }
 
-.go-to-adventure:hover {
+.go-to-adventure:enabled:hover {
     background: #aa6429;
+}
+
+.go-to-adventure:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 #inventory {

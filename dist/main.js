@@ -2603,7 +2603,8 @@ const initialState = {
                 hp: 30,
                 damage: 10
             },
-            selectedPartyMembers: []
+            selectedPartyMembers: [],
+            isIdling: false
         },
         {
             name: "hardcore orc beatings",
@@ -2620,11 +2621,13 @@ const initialState = {
                 hp: 50,
                 damage: 20
             },
-            selectedPartyMembers: []
+            selectedPartyMembers: [],
+            isIdling: false
         }
     ],
     log:[]
 };
+
 
 /***/ }),
 
@@ -2632,11 +2635,12 @@ const initialState = {
 /*!***********************!*\
   !*** ./src/quests.js ***!
   \***********************/
-/*! exports provided: startQuest, performRound, fight */
+/*! exports provided: startIdling, startQuest, performRound, fight */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startIdling", function() { return startIdling; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startQuest", function() { return startQuest; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "performRound", function() { return performRound; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fight", function() { return fight; });
@@ -2645,11 +2649,17 @@ __webpack_require__.r(__webpack_exports__);
     
 
 
+function startIdling(store, adventureIndex) {
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("start-adventure-idling", { adventureIndex: adventureIndex });
+
+    startQuest(store, adventureIndex);
+}
+
 function startQuest(store, adventureIndex) {
 
-    if (store.getState().adventures[adventureIndex].selectedPartyMembers.length === 0) {
-        Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])('choose-adventurer-for-adventure', { adventureIndex: adventureIndex, adventurerName: "player1", isAdventurerGoing: true });
-    }
+//    if (store.getState().adventures[adventureIndex].selectedPartyMembers.length === 0) {
+//        doAction('choose-adventurer-for-adventure', { adventureIndex: adventureIndex, adventurerName: "player1", isAdventurerGoing: true });
+//    }
 
     store.getState().adventures[adventureIndex].selectedPartyMembers.forEach(adventurerName => {
         Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("send-adventurer-to-adventure", { adventureIndex: adventureIndex, adventurerName: adventurerName }, "adventurers sent to " + store.getState().adventures[adventureIndex].name);
@@ -2781,6 +2791,12 @@ function doAction(action, actionParams, logMessage) {
         case "choose-adventurer-for-adventure":
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["chooseAdventurerForAdventure"](state, actionParams.isAdventurerGoing, actionParams.adventurerName, actionParams.adventureIndex);
             break;
+        case "start-adventure-idling":
+            state = _actions__WEBPACK_IMPORTED_MODULE_1__["startAdventureIdling"](state, actionParams.adventureIndex);
+            break;
+        case "stop-adventure-idling":
+            state = _actions__WEBPACK_IMPORTED_MODULE_1__["stopAdventureIdling"](state, actionParams.adventureIndex);
+            break;
     }
     localStorage.setItem('game', JSON.stringify(state));
     console.log(localStorage);
@@ -2792,6 +2808,7 @@ function doAction(action, actionParams, logMessage) {
 
     return state;
 }
+
 
 /***/ }),
 
@@ -2854,9 +2871,9 @@ function abbreviateNumber(value) {
       newValue /= 1000;
       suffixNum++;
     }
-  
+
     newValue = Math.round((newValue + Number.EPSILON) * 100) / 100;
-  
+
     newValue += suffixes[suffixNum];
     return newValue;
   }
@@ -2948,14 +2965,23 @@ function getItemElement(item) {
     return itemElement;
 }
 
-function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
+function getAdventureElement(state, adventureIndex, onSendPlayer, onStartIdling) {
     const adventure = state.adventures[adventureIndex];
     const button = document.createElement("button");
-    button.innerText = adventure.description;
+    button.innerText = "Send selected";
     button.classList = button.classList + " go-to-adventure"
-    button.onclick = whatToDoWhenClicked;
+    button.onclick = onSendPlayer;
     if (Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state).currentQuest !== null) {
         button.disabled = true;
+    }
+    if (adventure.selectedPartyMembers.length === 0) {
+      button.disabled = true;
+    }
+    const idleButton = document.createElement("button");
+    idleButton.innerText = "Start idling";
+    idleButton.onclick = onStartIdling;
+    if (adventure.selectedPartyMembers.length === 0) {
+      idleButton.disabled = true;
     }
     const adventureContainer = document.createElement("div");
     adventureContainer.className = "adventure-container";
@@ -2968,7 +2994,7 @@ function getAdventureElement(state, adventureIndex, whatToDoWhenClicked) {
         Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("choose-adventurer-for-adventure", { isAdventurerGoing, adventurerName, adventureIndex })
     }))
     adventureContainer.appendChild(button);
-
+    adventureContainer.appendChild(idleButton);
     return adventureContainer;
 }
 
@@ -3009,7 +3035,10 @@ function getAdventuresElement(store) {
     const availableAdventures = getAvailableAdventures(state);
     const buttons = availableAdventures.map(adventure => {
         const adventureIndex = state.adventures.indexOf(adventure);
-        return getAdventureElement(state, adventureIndex, () => Object(_quests__WEBPACK_IMPORTED_MODULE_1__["startQuest"])(store, adventureIndex));
+        return getAdventureElement(state,
+                                   adventureIndex,
+                                   () => Object(_quests__WEBPACK_IMPORTED_MODULE_1__["startQuest"])(store, adventureIndex),
+                                   () => startIdling(store, adventureIndex));
     });
     const buttonsContainer = document.createElement("div");
     buttons.forEach(button => buttonsContainer.appendChild(button));
@@ -3041,6 +3070,7 @@ function getLog(store) {
 function getAvailableAdventures(state) {
     return state.adventures.filter(adventure => Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(state).level >= adventure.requiredLevel)
 }
+
 
 /***/ })
 

@@ -86,7 +86,8 @@ export const initialState = {
                 hp: 30,
                 damage: 10
             },
-            selectedPartyMembers: []
+            selectedPartyMembers: [],
+            isIdling: false
         },
         {
             name: "hardcore orc beatings",
@@ -103,7 +104,8 @@ export const initialState = {
                 hp: 50,
                 damage: 20
             },
-            selectedPartyMembers: []
+            selectedPartyMembers: [],
+            isIdling: false
         }
     ],
     log:[]

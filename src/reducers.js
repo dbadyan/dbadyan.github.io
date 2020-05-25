@@ -43,6 +43,12 @@ export function doAction(action, actionParams, logMessage) {
         case "choose-adventurer-for-adventure":
             state = actions.chooseAdventurerForAdventure(state, actionParams.isAdventurerGoing, actionParams.adventurerName, actionParams.adventureIndex);
             break;
+        case "start-adventure-idling":
+            state = actions.startAdventureIdling(state, actionParams.adventureIndex);
+            break;
+        case "stop-adventure-idling":
+            state = actions.stopAdventureIdling(state, actionParams.adventureIndex);
+            break;
     }
     localStorage.setItem('game', JSON.stringify(state));
     console.log(localStorage);

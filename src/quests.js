@@ -1,11 +1,17 @@
     import { doAction } from './reducers';
 import { calculateItemStrength, calculateItemDefense } from './characterUtils';
 
+export function startIdling(store, adventureIndex) {
+    doAction("start-adventure-idling", { adventureIndex: adventureIndex });
+
+    startQuest(store, adventureIndex);
+}
+
 export function startQuest(store, adventureIndex) {
 
-    if (store.getState().adventures[adventureIndex].selectedPartyMembers.length === 0) {
-        doAction('choose-adventurer-for-adventure', { adventureIndex: adventureIndex, adventurerName: "player1", isAdventurerGoing: true });
-    }
+//    if (store.getState().adventures[adventureIndex].selectedPartyMembers.length === 0) {
+//        doAction('choose-adventurer-for-adventure', { adventureIndex: adventureIndex, adventurerName: "player1", isAdventurerGoing: true });
+//    }
 
     store.getState().adventures[adventureIndex].selectedPartyMembers.forEach(adventurerName => {
         doAction("send-adventurer-to-adventure", { adventureIndex: adventureIndex, adventurerName: adventurerName }, "adventurers sent to " + store.getState().adventures[adventureIndex].name);

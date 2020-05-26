@@ -1,5 +1,5 @@
 import { doAction } from './reducers';
-import { startQuest } from './quests';
+import { startQuest, startIdling, stoptIdling } from './quests';
 import { calculateItemStrength, calculateItemDefense, getPlayerFromState } from './characterUtils';
 import { renderWhenNeeded } from "./fe";
 
@@ -105,7 +105,7 @@ function getItemElement(item) {
     return itemElement;
 }
 
-function getAdventureElement(state, adventureIndex, onSendPlayer, onStartIdling) {
+function getAdventureElement(state, adventureIndex, onSendPlayer, onStartIdling, onStopIdling) {
     const adventure = state.adventures[adventureIndex];
     const button = document.createElement("button");
     button.innerText = "Send selected";
@@ -118,8 +118,14 @@ function getAdventureElement(state, adventureIndex, onSendPlayer, onStartIdling)
       button.disabled = true;
     }
     const idleButton = document.createElement("button");
-    idleButton.innerText = "Start idling";
-    idleButton.onclick = onStartIdling;
+    if(adventure.isIdling === false){
+        idleButton.innerText = "Start idling";
+        idleButton.onclick = onStartIdling;
+    }
+    else{
+        idleButton.innerText = "Stop idling";
+        idleButton.onclick = onStopIdling;
+    }
     if (adventure.selectedPartyMembers.length === 0) {
       idleButton.disabled = true;
     }
@@ -178,7 +184,8 @@ function getAdventuresElement(store) {
         return getAdventureElement(state,
                                    adventureIndex,
                                    () => startQuest(store, adventureIndex),
-                                   () => startIdling(store, adventureIndex));
+                                   () => startIdling(store, adventureIndex),
+                                   () => stoptIdling(state, adventureIndex));
     });
     const buttonsContainer = document.createElement("div");
     buttons.forEach(button => buttonsContainer.appendChild(button));

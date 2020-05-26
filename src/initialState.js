@@ -75,6 +75,7 @@ export const initialState = {
             name: "the basics",
             description: "fetch",
             collectibles: 3,
+            originalCollectibles: 3,
             requiredLevel: 1,
             rewards: {
                 gold: 5,
@@ -86,6 +87,11 @@ export const initialState = {
                 hp: 30,
                 damage: 10
             },
+            originalEnemy: {
+                name: "orc",
+                hp: 30,
+                damage: 10
+            },
             selectedPartyMembers: [],
             isIdling: false
         },
@@ -93,6 +99,7 @@ export const initialState = {
             name: "hardcore orc beatings",
             description: "more fetch",
             collectibles: 3,
+            originalCollectibles: 3,
             requiredLevel: 2,
             rewards: {
                 gold: 5,
@@ -100,6 +107,11 @@ export const initialState = {
                 exp: 5000
             },
             enemy: {
+                name: "orc",
+                hp: 50,
+                damage: 20
+            },
+            originalEnemy: {
                 name: "orc",
                 hp: 50,
                 damage: 20

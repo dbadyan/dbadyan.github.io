@@ -26,7 +26,7 @@ export function doAction(action, actionParams, logMessage) {
             state = actions.collectFromAdventure(state, actionParams.adventureIndex)
             break;
         case "reset-adventure":
-            state = actions.resetAdventure(state, state.initialState, actionParams.adventureIndex);
+            state = actions.resetAdventure(state, actionParams.adventureIndex);
             break;
         case "reward-exp":
             state = actions.rewardExp(state, actionParams.exp);

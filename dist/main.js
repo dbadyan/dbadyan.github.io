@@ -2243,7 +2243,7 @@ process.umask = function() { return 0; };
 /*!************************!*\
   !*** ./src/actions.js ***!
   \************************/
-/*! exports provided: changePlayerHP, giveThisManACookie, levelUp, rewardExp, changeEnemyHP, sendAdventurerToAdventure, returnAdventurerFromAdventure, collectFromAdventure, resetAdventure, startGame, chooseAdventurerForAdventure, writeToLog, equipItem */
+/*! exports provided: changePlayerHP, giveThisManACookie, levelUp, rewardExp, changeEnemyHP, sendAdventurerToAdventure, returnAdventurerFromAdventure, collectFromAdventure, resetAdventure, startGame, chooseAdventurerForAdventure, writeToLog, equipItem, startAdventureIdling, stopAdventureIdling */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2261,6 +2261,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "chooseAdventurerForAdventure", function() { return chooseAdventurerForAdventure; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "writeToLog", function() { return writeToLog; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "equipItem", function() { return equipItem; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startAdventureIdling", function() { return startAdventureIdling; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "stopAdventureIdling", function() { return stopAdventureIdling; });
 /* harmony import */ var _reducers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./reducers */ "./src/reducers.js");
 /* harmony import */ var immer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! immer */ "./node_modules/immer/dist/immer.module.js");
 /* harmony import */ var _characterUtils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./characterUtils */ "./src/characterUtils.js");
@@ -2333,22 +2335,20 @@ function collectFromAdventure(state, adventureIndex) {
     })
 }
 
-function resetAdventure(currentState, initialState, adventureIndex) {
-    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(currentState, draftState => {
-        draftState.adventures[adventureIndex] = initialState.adventures[adventureIndex];
+function resetAdventure(state, adventureIndex) {
+    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
+        draftState.adventures[adventureIndex].enemy = draftState.adventures[adventureIndex].originalEnemy;
+        draftState.adventures[adventureIndex].collectibles = draftState.adventures[adventureIndex].originalCollectibles;
     })
 }
 
-function startGame(state, initialState) {
-    let newState = JSON.parse(JSON.stringify(initialState))
-    if (newState.initialState === undefined) {
-        newState.initialState = JSON.parse(JSON.stringify(initialState));
-    }
+function startGame(_, initialState) {
+    let newState = JSON.parse(JSON.stringify(initialState));
     return newState;
 }
 
-function chooseAdventurerForAdventure(currentState, isAdventurerGoing, adventurerName, adventureIndex) {
-    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(currentState, draftState => {
+function chooseAdventurerForAdventure(state, isAdventurerGoing, adventurerName, adventureIndex) {
+    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
         if (isAdventurerGoing) {
             draftState.adventures[adventureIndex].selectedPartyMembers.push(adventurerName);
         } else {
@@ -2357,8 +2357,8 @@ function chooseAdventurerForAdventure(currentState, isAdventurerGoing, adventure
     })
 }
 
-function writeToLog(currentState,logMessage){
-    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(currentState, draftState => {
+function writeToLog(state,logMessage){
+    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
         draftState.log.push(logMessage);
     })
 }
@@ -2366,6 +2366,18 @@ function writeToLog(currentState,logMessage){
 function equipItem(state, itemName) {
     return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
         Object(_characterUtils__WEBPACK_IMPORTED_MODULE_2__["getPlayerFromState"])(draftState).equipment[itemName].equipped = true;
+    })
+}
+
+function startAdventureIdling(state,adventureIndex){
+    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
+        draftState.adventures[adventureIndex].isIdling = true;
+    })
+}
+
+function stopAdventureIdling(state,adventureIndex){
+    return Object(immer__WEBPACK_IMPORTED_MODULE_1__["produce"])(state, draftState => {
+        draftState.adventures[adventureIndex].isIdling = false;
     })
 }
 
@@ -2592,6 +2604,7 @@ const initialState = {
             name: "the basics",
             description: "fetch",
             collectibles: 3,
+            originalCollectibles: 3,
             requiredLevel: 1,
             rewards: {
                 gold: 5,
@@ -2603,6 +2616,11 @@ const initialState = {
                 hp: 30,
                 damage: 10
             },
+            originalEnemy: {
+                name: "orc",
+                hp: 30,
+                damage: 10
+            },
             selectedPartyMembers: [],
             isIdling: false
         },
@@ -2610,6 +2628,7 @@ const initialState = {
             name: "hardcore orc beatings",
             description: "more fetch",
             collectibles: 3,
+            originalCollectibles: 3,
             requiredLevel: 2,
             rewards: {
                 gold: 5,
@@ -2617,6 +2636,11 @@ const initialState = {
                 exp: 5000
             },
             enemy: {
+                name: "orc",
+                hp: 50,
+                damage: 20
+            },
+            originalEnemy: {
                 name: "orc",
                 hp: 50,
                 damage: 20
@@ -2635,12 +2659,13 @@ const initialState = {
 /*!***********************!*\
   !*** ./src/quests.js ***!
   \***********************/
-/*! exports provided: startIdling, startQuest, performRound, fight */
+/*! exports provided: startIdling, stoptIdling, startQuest, performRound, fight */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startIdling", function() { return startIdling; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "stoptIdling", function() { return stoptIdling; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startQuest", function() { return startQuest; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "performRound", function() { return performRound; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fight", function() { return fight; });
@@ -2653,6 +2678,9 @@ function startIdling(store, adventureIndex) {
     Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("start-adventure-idling", { adventureIndex: adventureIndex });
 
     startQuest(store, adventureIndex);
+}
+function stoptIdling(_, adventureIndex) {
+    Object(_reducers__WEBPACK_IMPORTED_MODULE_0__["doAction"])("stop-adventure-idling", { adventureIndex: adventureIndex });
 }
 
 function startQuest(store, adventureIndex) {
@@ -2708,9 +2736,9 @@ function performRound(store, adventureIndex) {
     return "CONTINUE"
 }
 
-function getPartyStrength(state, adventureindex) {
+function getPartyStrength(state, adventureIndex) {
     return state.party.adventurers.filter(member => {
-        return state.adventures[adventureindex].selectedPartyMembers.indexOf(member.name) > -1;
+        return state.adventures[adventureIndex].selectedPartyMembers.indexOf(member.name) > -1;
     }).reduce((strengthSum, currentMember) => strengthSum + currentMember.stats.strength, 0)
 }
 function isCollected(adventure) {
@@ -2724,7 +2752,7 @@ function isDead(character) {
 function fight(store, adventureIndex) {
     const intervalId = setInterval(() => {
         const roundResult = performRound(store, adventureIndex);
-        if (roundResult !== "CONTINUE") {
+        if (roundResult !== "CONTINUE" && store.getState().adventures[adventureIndex].isIdling === false) {
             clearInterval(intervalId);
         }
     }, 2000);
@@ -2774,7 +2802,7 @@ function doAction(action, actionParams, logMessage) {
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["collectFromAdventure"](state, actionParams.adventureIndex)
             break;
         case "reset-adventure":
-            state = _actions__WEBPACK_IMPORTED_MODULE_1__["resetAdventure"](state, state.initialState, actionParams.adventureIndex);
+            state = _actions__WEBPACK_IMPORTED_MODULE_1__["resetAdventure"](state, actionParams.adventureIndex);
             break;
         case "reward-exp":
             state = _actions__WEBPACK_IMPORTED_MODULE_1__["rewardExp"](state, actionParams.exp);
@@ -2965,7 +2993,7 @@ function getItemElement(item) {
     return itemElement;
 }
 
-function getAdventureElement(state, adventureIndex, onSendPlayer, onStartIdling) {
+function getAdventureElement(state, adventureIndex, onSendPlayer, onStartIdling, onStopIdling) {
     const adventure = state.adventures[adventureIndex];
     const button = document.createElement("button");
     button.innerText = "Send selected";
@@ -2978,8 +3006,14 @@ function getAdventureElement(state, adventureIndex, onSendPlayer, onStartIdling)
       button.disabled = true;
     }
     const idleButton = document.createElement("button");
-    idleButton.innerText = "Start idling";
-    idleButton.onclick = onStartIdling;
+    if(adventure.isIdling === false){
+        idleButton.innerText = "Start idling";
+        idleButton.onclick = onStartIdling;
+    }
+    else{
+        idleButton.innerText = "Stop idling";
+        idleButton.onclick = onStopIdling;
+    }
     if (adventure.selectedPartyMembers.length === 0) {
       idleButton.disabled = true;
     }
@@ -3038,7 +3072,8 @@ function getAdventuresElement(store) {
         return getAdventureElement(state,
                                    adventureIndex,
                                    () => Object(_quests__WEBPACK_IMPORTED_MODULE_1__["startQuest"])(store, adventureIndex),
-                                   () => startIdling(store, adventureIndex));
+                                   () => Object(_quests__WEBPACK_IMPORTED_MODULE_1__["startIdling"])(store, adventureIndex),
+                                   () => Object(_quests__WEBPACK_IMPORTED_MODULE_1__["stoptIdling"])(state, adventureIndex));
     });
     const buttonsContainer = document.createElement("div");
     buttons.forEach(button => buttonsContainer.appendChild(button));

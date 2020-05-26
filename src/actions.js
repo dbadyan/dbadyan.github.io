@@ -67,22 +67,20 @@ export function collectFromAdventure(state, adventureIndex) {
     })
 }
 
-export function resetAdventure(currentState, initialState, adventureIndex) {
-    return produce(currentState, draftState => {
-        draftState.adventures[adventureIndex] = initialState.adventures[adventureIndex];
+export function resetAdventure(state, adventureIndex) {
+    return produce(state, draftState => {
+        draftState.adventures[adventureIndex].enemy = draftState.adventures[adventureIndex].originalEnemy;
+        draftState.adventures[adventureIndex].collectibles = draftState.adventures[adventureIndex].originalCollectibles;
     })
 }
 
-export function startGame(state, initialState) {
-    let newState = JSON.parse(JSON.stringify(initialState))
-    if (newState.initialState === undefined) {
-        newState.initialState = JSON.parse(JSON.stringify(initialState));
-    }
+export function startGame(_, initialState) {
+    let newState = JSON.parse(JSON.stringify(initialState));
     return newState;
 }
 
-export function chooseAdventurerForAdventure(currentState, isAdventurerGoing, adventurerName, adventureIndex) {
-    return produce(currentState, draftState => {
+export function chooseAdventurerForAdventure(state, isAdventurerGoing, adventurerName, adventureIndex) {
+    return produce(state, draftState => {
         if (isAdventurerGoing) {
             draftState.adventures[adventureIndex].selectedPartyMembers.push(adventurerName);
         } else {
@@ -91,8 +89,8 @@ export function chooseAdventurerForAdventure(currentState, isAdventurerGoing, ad
     })
 }
 
-export function writeToLog(currentState,logMessage){
-    return produce(currentState, draftState => {
+export function writeToLog(state,logMessage){
+    return produce(state, draftState => {
         draftState.log.push(logMessage);
     })
 }
@@ -100,5 +98,17 @@ export function writeToLog(currentState,logMessage){
 export function equipItem(state, itemName) {
     return produce(state, draftState => {
         getPlayerFromState(draftState).equipment[itemName].equipped = true;
+    })
+}
+
+export function startAdventureIdling(state,adventureIndex){
+    return produce(state, draftState => {
+        draftState.adventures[adventureIndex].isIdling = true;
+    })
+}
+
+export function stopAdventureIdling(state,adventureIndex){
+    return produce(state, draftState => {
+        draftState.adventures[adventureIndex].isIdling = false;
     })
 }

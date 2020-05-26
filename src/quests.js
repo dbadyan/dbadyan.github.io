@@ -6,6 +6,9 @@ export function startIdling(store, adventureIndex) {
 
     startQuest(store, adventureIndex);
 }
+export function stoptIdling(_, adventureIndex) {
+    doAction("stop-adventure-idling", { adventureIndex: adventureIndex });
+}
 
 export function startQuest(store, adventureIndex) {
 
@@ -60,9 +63,9 @@ export function performRound(store, adventureIndex) {
     return "CONTINUE"
 }
 
-function getPartyStrength(state, adventureindex) {
+function getPartyStrength(state, adventureIndex) {
     return state.party.adventurers.filter(member => {
-        return state.adventures[adventureindex].selectedPartyMembers.indexOf(member.name) > -1;
+        return state.adventures[adventureIndex].selectedPartyMembers.indexOf(member.name) > -1;
     }).reduce((strengthSum, currentMember) => strengthSum + currentMember.stats.strength, 0)
 }
 function isCollected(adventure) {
@@ -76,7 +79,7 @@ function isDead(character) {
 export function fight(store, adventureIndex) {
     const intervalId = setInterval(() => {
         const roundResult = performRound(store, adventureIndex);
-        if (roundResult !== "CONTINUE") {
+        if (roundResult !== "CONTINUE" && store.getState().adventures[adventureIndex].isIdling === false) {
             clearInterval(intervalId);
         }
     }, 2000);
